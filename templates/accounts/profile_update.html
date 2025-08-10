@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Profile - CRM System{% endblock %}
+{% block page_title %}Update Profile{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'accounts:profile' %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Profile
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- User Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_form.errors %}
+                        <div class="alert alert-danger">
+                            {{ user_form.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ user_form.first_name.id_for_label }}" class="form-label">First Name *</label>
+                                {{ user_form.first_name }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ user_form.last_name.id_for_label }}" class="form-label">Last Name *</label>
+                                {{ user_form.last_name }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ user_form.email.id_for_label }}" class="form-label">Email *</label>
+                                {{ user_form.email }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ user_form.phone.id_for_label }}" class="form-label">Phone</label>
+                                {{ user_form.phone }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ user_form.department.id_for_label }}" class="form-label">Department</label>
+                                {{ user_form.department }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ user_form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                                {{ user_form.profile_picture }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Additional Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if profile_form.errors %}
+                        <div class="alert alert-danger">
+                            {{ profile_form.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ profile_form.bio.id_for_label }}" class="form-label">Bio</label>
+                        {{ profile_form.bio }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ profile_form.address.id_for_label }}" class="form-label">Address</label>
+                        {{ profile_form.address }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ profile_form.city.id_for_label }}" class="form-label">City</label>
+                                {{ profile_form.city }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ profile_form.state.id_for_label }}" class="form-label">State</label>
+                                {{ profile_form.state }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ profile_form.country.id_for_label }}" class="form-label">Country</label>
+                                {{ profile_form.country }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ profile_form.postal_code.id_for_label }}" class="form-label">Postal Code</label>
+                                {{ profile_form.postal_code }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ profile_form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
+                                {{ profile_form.date_of_birth }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Update Profile
+                        </button>
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

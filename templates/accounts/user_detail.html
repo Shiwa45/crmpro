@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user_obj.get_full_name }} - CRM System{% endblock %}
+{% block page_title %}{{ user_obj.get_full_name }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'accounts:user_update' user_obj.pk %}" class="btn btn-warning">
+        <i class="bi bi-pencil"></i> Edit
+    </a>
+    <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Users
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">User Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="fw-bold">Username:</td>
+                                <td>{{ user_obj.username }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Email:</td>
+                                <td>{{ user_obj.email }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Phone:</td>
+                                <td>{{ user_obj.phone|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Role:</td>
+                                <td><span class="badge bg-secondary">{{ user_obj.get_role_display }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="fw-bold">Department:</td>
+                                <td>{{ user_obj.department|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Status:</td>
+                                <td>
+                                    {% if user_obj.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Date Joined:</td>
+                                <td>{{ user_obj.date_joined|date:"M d, Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Last Login:</td>
+                                <td>{{ user_obj.last_login|date:"M d, Y H:i"|default:"Never" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Profile Picture</h6>
+            </div>
+            <div class="card-body text-center">
+                {% if user_obj.profile_picture %}
+                <img src="{{ user_obj.profile_picture.url }}" class="rounded-circle" width="120" height="120">
+                {% else %}
+                <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px; font-size: 48px;">
+                    {{ user_obj.first_name.0|upper }}{{ user_obj.last_name.0|upper }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

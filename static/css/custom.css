@@ -1,0 +1,174 @@
+/* Custom CRM Styles */
+.sidebar {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.sidebar .nav-link {
+    color: rgba(255,255,255,0.8);
+    border-radius: 0.375rem;
+    margin: 0.125rem 0;
+    transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover, 
+.sidebar .nav-link.active {
+    color: white;
+    background: rgba(255,255,255,0.1);
+    transform: translateX(5px);
+}
+
+.main-content {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+
+/* Status and Priority Badges */
+.badge-priority-hot { 
+    background-color: #dc3545 !important; 
+}
+
+.badge-priority-warm { 
+    background-color: #fd7e14 !important; 
+}
+
+.badge-priority-cold { 
+    background-color: #6c757d !important; 
+}
+
+.badge-status-new { 
+    background-color: #0d6efd !important; 
+}
+
+.badge-status-contacted { 
+    background-color: #6f42c1 !important; 
+}
+
+.badge-status-qualified { 
+    background-color: #20c997 !important; 
+}
+
+.badge-status-proposal { 
+    background-color: #fd7e14 !important; 
+}
+
+.badge-status-negotiation { 
+    background-color: #ffc107 !important; 
+}
+
+.badge-status-won { 
+    background-color: #198754 !important; 
+}
+
+.badge-status-lost { 
+    background-color: #dc3545 !important; 
+}
+
+.badge-status-on_hold { 
+    background-color: #6c757d !important; 
+}
+
+/* Form improvements */
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+}
+
+/* Loading animation */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Custom scrollbar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100vh;
+        z-index: 1050;
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+    }
+}
+
+/* Activity timeline */
+.activity-timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.activity-timeline:before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.activity-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.activity-item:before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #007bff;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}

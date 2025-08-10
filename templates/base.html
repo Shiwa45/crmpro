@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CRM System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            width: var(--sidebar-width);
+            background: var(--primary-gradient);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-brand {
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-brand:hover {
+            color: white;
+        }
+
+        .sidebar-brand i {
+            margin-right: 10px;
+            font-size: 28px;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin-bottom: 5px;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: white;
+        }
+
+        .nav-link i {
+            margin-right: 12px;
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .topbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .content-area {
+            padding: 30px;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Status and Priority Badges */
+        .badge-priority-hot { 
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52) !important;
+            color: white;
+        }
+
+        .badge-priority-warm { 
+            background: linear-gradient(135deg, #feca57, #ff9ff3) !important;
+            color: white;
+        }
+
+        .badge-priority-cold { 
+            background: linear-gradient(135deg, #74b9ff, #0984e3) !important;
+            color: white;
+        }
+
+        .badge-status-new { 
+            background: linear-gradient(135deg, #74b9ff, #0984e3) !important;
+            color: white;
+        }
+
+        .badge-status-contacted { 
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7) !important;
+            color: white;
+        }
+
+        .badge-status-qualified { 
+            background: linear-gradient(135deg, #fd79a8, #e84393) !important;
+            color: white;
+        }
+
+        .badge-status-proposal { 
+            background: linear-gradient(135deg, #fdcb6e, #e17055) !important;
+            color: white;
+        }
+
+        .badge-status-negotiation { 
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0) !important;
+            color: white;
+        }
+
+        .badge-status-won { 
+            background: linear-gradient(135deg, #00b894, #00a085) !important;
+            color: white;
+        }
+
+        .badge-status-lost { 
+            background: linear-gradient(135deg, #e17055, #d63031) !important;
+            color: white;
+        }
+
+        .badge-status-on_hold { 
+            background: linear-gradient(135deg, #636e72, #2d3436) !important;
+            color: white;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-gradient);
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+
+        /* Tables */
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+        }
+
+        /* Forms */
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 10px 15px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+
+            .sidebar.show {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .topbar {
+                padding: 15px 20px;
+            }
+
+            .content-area {
+                padding: 20px 15px;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .spinner-grow-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        /* User Menu */
+        .user-menu {
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1055;
+        }
+
+        /* Progress Bars */
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            border-radius: 4px;
+        }
+
+        /* Activity Timeline */
+        .activity-timeline {
+            position: relative;
+        }
+
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+
+        .activity-item {
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 20px;
+        }
+
+        .activity-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'dashboard:home' %}" class="sidebar-brand">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>CRM Pro</span>
+            </a>
+        </div>
+        
+        <ul class="nav flex-column sidebar-nav">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" 
+                   href="{% url 'dashboard:home' %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.app_name == 'leads' %}active{% endif %}" 
+                   href="{% url 'leads:list' %}">
+                    <i class="bi bi-people"></i>
+                    <span>Leads</span>
+                </a>
+            </li>
+            
+            {% if user.role != 'sales_rep' %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.app_name == 'accounts' and 'user' in request.path %}active{% endif %}" 
+                   href="{% url 'accounts:user_list' %}">
+                    <i class="bi bi-person-gear"></i>
+                    <span>User Management</span>
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}" 
+                   href="{% url 'dashboard:analytics' %}">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Analytics</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'leads:export' %}">
+                    <i class="bi bi-download"></i>
+                    <span>Export Data</span>
+                </a>
+            </li>
+            
+            <!-- Settings Section -->
+            <li class="nav-item mt-4">
+                <div class="nav-link text-white-50 small text-uppercase">
+                    <strong>Settings</strong>
+                </div>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:profile' %}">
+                    <i class="bi bi-person-circle"></i>
+                    <span>Profile</span>
+                </a>
+            </li>
+            
+            {% if user.role in 'admin,superadmin' %}
+            <li class="nav-item">
+                <a class="nav-link" href="/admin/" target="_blank">
+                    <i class="bi bi-gear"></i>
+                    <span>Admin Panel</span>
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'accounts:logout' %}">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation Bar -->
+        <div class="topbar">
+            <div class="d-flex justify-content-between align-items-center">
+                <!-- Mobile Menu Toggle -->
+                <button class="btn btn-link d-md-none" id="sidebarToggle">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+                
+                <!-- Page Title -->
+                <div class="page-header">
+                    <h4 class="mb-0 fw-bold">{% block page_title %}Dashboard{% endblock %}</h4>
+                    <small class="text-muted">{% block page_subtitle %}Welcome back, {{ user.get_full_name }}{% endblock %}</small>
+                </div>
+                
+                <!-- Page Actions & User Menu -->
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Page Actions -->
+                    <div class="page-actions">
+                        {% block page_actions %}{% endblock %}
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <button class="btn btn-link position-relative" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6em;">
+                                3
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><a class="dropdown-item" href="#">New lead assigned</a></li>
+                            <li><a class="dropdown-item" href="#">Follow-up due</a></li>
+                            <li><a class="dropdown-item" href="#">Target achieved</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="dropdown user-menu">
+                        <div class="user-avatar" data-bs-toggle="dropdown">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="User" class="w-100 h-100 rounded-circle">
+                            {% else %}
+                                {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                            {% endif %}
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <div class="dropdown-header">
+                                    <strong>{{ user.get_full_name }}</strong><br>
+                                    <small class="text-muted">{{ user.get_role_display }}</small>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                                <i class="bi bi-person me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="bi bi-gear me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Messages -->
+            {% if messages %}
+                <div class="messages-container mb-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {% if message.tags == 'error' %}
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                            {% elif message.tags == 'success' %}
+                                <i class="bi bi-check-circle me-2"></i>
+                            {% elif message.tags == 'warning' %}
+                                <i class="bi bi-exclamation-circle me-2"></i>
+                            {% else %}
+                                <i class="bi bi-info-circle me-2"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Page Content -->
+            <div class="page-content fade-in">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Sidebar toggle for mobile
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('show');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(e.target) && 
+                !sidebarToggle?.contains(e.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Auto-hide alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Global AJAX setup for Django CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Set up CSRF token for AJAX requests
+        const csrftoken = getCookie('csrftoken');
+        
+        // Global fetch wrapper with CSRF
+        window.fetchWithCSRF = function(url, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                }
+            };
+            
+            return fetch(url, {
+                ...defaultOptions,
+                ...options,
+                headers: {
+                    ...defaultOptions.headers,
+                    ...options.headers
+                }
+            });
+        };
+
+        // Show toast notification
+        window.showToast = function(message, type = 'info', duration = 4000) {
+            const toastContainer = document.querySelector('.toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            const toastHTML = `
+                <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: duration });
+            toast.show();
+            
+            // Remove from DOM after hiding
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                toastElement.remove();
+            });
+        };
+
+        // Loading state management
+        window.setLoadingState = function(element, loading = true) {
+            if (loading) {
+                element.classList.add('loading');
+                element.disabled = true;
+                
+                // Add spinner if it's a button
+                if (element.tagName === 'BUTTON') {
+                    const originalText = element.innerHTML;
+                    element.dataset.originalText = originalText;
+                    element.innerHTML = `
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Loading...
+                    `;
+                }
+            } else {
+                element.classList.remove('loading');
+                element.disabled = false;
+                
+                // Restore original text if it's a button
+                if (element.tagName === 'BUTTON' && element.dataset.originalText) {
+                    element.innerHTML = element.dataset.originalText;
+                    delete element.dataset.originalText;
+                }
+            }
+        };
+
+        // Confirm dialog
+        window.confirmAction = function(message, callback) {
+            if (confirm(message)) {
+                callback();
+            }
+        };
+
+        // Format number with commas
+        window.formatNumber = function(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        };
+
+        // Format currency
+        window.formatCurrency = function(amount) {
+            return '₹' + formatNumber(parseFloat(amount).toFixed(2));
+        };
+
+        // Smooth scroll to element
+        window.scrollToElement = function(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        // Global keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Alt + D for dashboard
+            if (e.altKey && e.key === 'd') {
+                e.preventDefault();
+                window.location.href = "{% url 'dashboard:home' %}";
+            }
+            
+            // Alt + L for leads
+            if (e.altKey && e.key === 'l') {
+                e.preventDefault();
+                window.location.href = "{% url 'leads:list' %}";
+            }
+            
+            // Alt + N for new lead
+            if (e.altKey && e.key === 'n') {
+                e.preventDefault();
+                window.location.href = "{% url 'leads:create' %}";
+            }
+            
+            // Alt + A for analytics
+            if (e.altKey && e.key === 'a') {
+                e.preventDefault();
+                window.location.href = "{% url 'dashboard:analytics' %}";
+            }
+            
+            // Escape key to close modals/dropdowns
+            if (e.key === 'Escape') {
+                // Close any open dropdowns
+                const openDropdowns = document.querySelectorAll('.dropdown-menu.show');
+                openDropdowns.forEach(dropdown => {
+                    const toggle = dropdown.previousElementSibling;
+                    if (toggle) {
+                        bootstrap.Dropdown.getInstance(toggle)?.hide();
+                    }
+                });
+                
+                // Close any open modals
+                const openModals = document.querySelectorAll('.modal.show');
+                openModals.forEach(modal => {
+                    bootstrap.Modal.getInstance(modal)?.hide();
+                });
+            }
+        });
+
+        // Update page title when visibility changes
+        let originalTitle = document.title;
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                document.title = '• ' + originalTitle;
+            } else {
+                document.title = originalTitle;
+            }
+        });
+
+        // Add animation classes to elements when they come into view
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all cards and important elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const elementsToAnimate = document.querySelectorAll('.card, .alert, .table-responsive');
+            elementsToAnimate.forEach(el => {
+                observer.observe(el);
+            });
+        });
+
+        // Performance monitoring
+        window.addEventListener('load', function() {
+            // Log page load time for debugging
+            const loadTime = performance.now();
+            console.log('Page loaded in', Math.round(loadTime), 'ms');
+            
+            // Report slow pages (> 3 seconds)
+            if (loadTime > 3000) {
+                console.warn('Slow page load detected:', Math.round(loadTime), 'ms');
+            }
+        });
+
+        // Online/offline status
+        window.addEventListener('online', function() {
+            showToast('Connection restored', 'success', 2000);
+        });
+
+        window.addEventListener('offline', function() {
+            showToast('Connection lost. Some features may not work.', 'warning', 5000);
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

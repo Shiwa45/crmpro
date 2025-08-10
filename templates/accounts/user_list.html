@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management - CRM System{% endblock %}
+{% block page_title %}User Management{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'accounts:user_create' %}" class="btn btn-primary">
+    <i class="bi bi-person-plus"></i> Add New User
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_obj in users %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if user_obj.profile_picture %}
+                                <img src="{{ user_obj.profile_picture.url }}" class="rounded-circle me-2" width="40" height="40">
+                                {% else %}
+                                <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                    {{ user_obj.first_name.0|upper }}{{ user_obj.last_name.0|upper }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="fw-bold">{{ user_obj.get_full_name }}</div>
+                                    <small class="text-muted">{{ user_obj.username }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ user_obj.email }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ user_obj.get_role_display }}</span>
+                        </td>
+                        <td>{{ user_obj.department|default:"-" }}</td>
+                        <td>
+                            {% if user_obj.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user_obj.date_joined|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'accounts:user_detail' user_obj.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'accounts:user_update' user_obj.pk %}" class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            No users found. <a href="{% url 'accounts:user_create' %}">Create your first user</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

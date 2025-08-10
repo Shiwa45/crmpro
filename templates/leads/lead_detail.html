@@ -1,0 +1,241 @@
+<!-- templates/leads/lead_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ lead.get_full_name }} - CRM System{% endblock %}
+{% block page_title %}{{ lead.get_full_name }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    {% if user.role != 'sales_rep' or lead.assigned_to == user %}
+    <a href="{% url 'leads:update' lead.pk %}" class="btn btn-warning">
+        <i class="bi bi-pencil"></i> Edit
+    </a>
+    {% endif %}
+    <a href="{% url 'leads:list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Leads
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Lead Information -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Lead Information</h5>
+                <div>
+                    <span class="badge badge-status-{{ lead.status }} me-2">{{ lead.get_status_display }}</span>
+                    <span class="badge badge-priority-{{ lead.priority }}">{{ lead.get_priority_display }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="fw-bold">Name:</td>
+                                <td>{{ lead.get_full_name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Email:</td>
+                                <td><a href="mailto:{{ lead.email }}">{{ lead.email }}</a></td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Phone:</td>
+                                <td>
+                                    {% if lead.phone %}
+                                    <a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>
+                                    {% else %}-{% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Company:</td>
+                                <td>{{ lead.company|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Job Title:</td>
+                                <td>{{ lead.job_title|default:"-" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="fw-bold">Source:</td>
+                                <td>{{ lead.source.name|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Assigned To:</td>
+                                <td>{{ lead.assigned_to.get_full_name|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Created By:</td>
+                                <td>{{ lead.created_by.get_full_name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Created Date:</td>
+                                <td>{{ lead.created_at|date:"M d, Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Last Updated:</td>
+                                <td>{{ lead.updated_at|date:"M d, Y H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if lead.address or lead.city or lead.state %}
+                <hr>
+                <h6>Address Information</h6>
+                <p class="mb-0">
+                    {% if lead.address %}{{ lead.address }}<br>{% endif %}
+                    {% if lead.city %}{{ lead.city }}{% endif %}{% if lead.state %}, {{ lead.state }}{% endif %}{% if lead.postal_code %} {{ lead.postal_code }}{% endif %}<br>
+                    {{ lead.country }}
+                </p>
+                {% endif %}
+                
+                {% if lead.budget %}
+                <hr>
+                <h6>Budget</h6>
+                <p class="mb-0">₹{{ lead.budget|floatformat:2 }}</p>
+                {% endif %}
+                
+                {% if lead.requirements %}
+                <hr>
+                <h6>Requirements</h6>
+                <p class="mb-0">{{ lead.requirements|linebreaks }}</p>
+                {% endif %}
+                
+                {% if lead.notes %}
+                <hr>
+                <h6>Notes</h6>
+                <p class="mb-0">{{ lead.notes|linebreaks }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Activities -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Activities</h5>
+            </div>
+            <div class="card-body">
+                {% for activity in activities %}
+                <div class="d-flex mb-3">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            {% if activity.activity_type == 'call' %}
+                            <i class="bi bi-telephone"></i>
+                            {% elif activity.activity_type == 'email' %}
+                            <i class="bi bi-envelope"></i>
+                            {% elif activity.activity_type == 'meeting' %}
+                            <i class="bi bi-calendar"></i>
+                            {% else %}
+                            <i class="bi bi-chat-text"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="mb-1">{{ activity.subject }}</h6>
+                        <p class="text-muted mb-1">{{ activity.description|default:"No description provided." }}</p>
+                        <small class="text-muted">
+                            by {{ activity.user.get_full_name }} on {{ activity.created_at|date:"M d, Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">No activities recorded yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="mailto:{{ lead.email }}" class="btn btn-outline-primary">
+                        <i class="bi bi-envelope"></i> Send Email
+                    </a>
+                    {% if lead.phone %}
+                    <a href="tel:{{ lead.phone }}" class="btn btn-outline-success">
+                        <i class="bi bi-telephone"></i> Call
+                    </a>
+                    {% endif %}
+                    {% if user.role != 'sales_rep' or lead.assigned_to == user %}
+                    <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#activityModal">
+                        <i class="bi bi-plus-circle"></i> Add Activity
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lead Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Lead Statistics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ activities|length }}</h4>
+                            <small class="text-muted">Activities</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">
+                            {% if lead.last_contacted %}
+                            {{ lead.last_contacted|timesince }} ago
+                            {% else %}
+                            Never
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">Last Contact</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Modal -->
+<div class="modal fade" id="activityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Activity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'leads:add_activity' lead.pk %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ activity_form.activity_type.id_for_label }}" class="form-label">Activity Type</label>
+                        {{ activity_form.activity_type }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ activity_form.subject.id_for_label }}" class="form-label">Subject</label>
+                        {{ activity_form.subject }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ activity_form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ activity_form.description }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

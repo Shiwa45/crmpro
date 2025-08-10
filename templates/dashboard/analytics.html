@@ -1,0 +1,559 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Analytics - CRM System{% endblock %}
+{% block page_title %}Analytics & Reports{% endblock %}
+{% block page_subtitle %}Detailed insights and performance metrics{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <select class="form-select form-select-sm" id="analyticsDateRange" onchange="updateAnalyticsDateRange()">
+        <option value="week" {% if date_range == 'week' %}selected{% endif %}>Last 7 Days</option>
+        <option value="month" {% if date_range == 'month' %}selected{% endif %}>Last 30 Days</option>
+        <option value="quarter" {% if date_range == 'quarter' %}selected{% endif %}>Last 3 Months</option>
+        <option value="year" {% if date_range == 'year' %}selected{% endif %}>Last 12 Months</option>
+        <option value="custom" {% if date_range == 'custom' %}selected{% endif %}>Custom Range</option>
+    </select>
+    <button class="btn btn-outline-primary btn-sm" onclick="refreshAnalytics()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+    <button class="btn btn-success btn-sm" onclick="exportAnalytics()">
+        <i class="bi bi-download"></i> Export
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Custom Date Range (Hidden by default) -->
+<div class="row mb-4 d-none" id="customDateRange">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">From Date</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">To Date</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary">Apply Filter</button>
+                    </div>
+                    <input type="hidden" name="date_range" value="custom">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overview Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-white-50 text-uppercase">Conversion Rate</h6>
+                        <h3 class="mb-0" id="conversionRate">
+                            {% if monthly_data %}
+                                {% with last_month=monthly_data|last %}
+                                    {{ last_month.conversion_rate|default:0 }}%
+                                {% endwith %}
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-graph-up-arrow fs-2 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-gradient-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-white-50 text-uppercase">Total Leads</h6>
+                        <h3 class="mb-0" id="totalAnalyticsLeads">
+                            {% if monthly_data %}
+                                {% with last_month=monthly_data|last %}
+                                    {{ last_month.total|default:0 }}
+                                {% endwith %}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-people fs-2 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-gradient-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-white-50 text-uppercase">Won Deals</h6>
+                        <h3 class="mb-0" id="wonDeals">
+                            {% if monthly_data %}
+                                {% with last_month=monthly_data|last %}
+                                    {{ last_month.won|default:0 }}
+                                {% endwith %}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-trophy fs-2 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-gradient-warning text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-white-50 text-uppercase">Lost Deals</h6>
+                        <h3 class="mb-0" id="lostDeals">
+                            {% if monthly_data %}
+                                {% with last_month=monthly_data|last %}
+                                    {{ last_month.lost|default:0 }}
+                                {% endwith %}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="ms-3">
+                        <i class="bi bi-x-circle fs-2 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Monthly Trends Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-graph-up"></i> Monthly Trends
+                </h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        Chart Type
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="changeChartType('line')">Line Chart</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeChartType('bar')">Bar Chart</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="changeChartType('area')">Area Chart</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyTrendsChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Distribution Chart -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-pie-chart"></i> Status Distribution
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="300" height="300"></canvas>
+                <div class="mt-3">
+                    {% for status in status_data %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="me-2" style="width: 12px; height: 12px; background-color: {{ status.color|default:'#6c757d' }}; border-radius: 50%;"></div>
+                            <span class="small">{{ status.status }}</span>
+                        </div>
+                        <span class="badge bg-secondary">{{ status.count }} ({{ status.percentage }}%)</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Source Performance and Team Performance -->
+<div class="row mb-4">
+    <!-- Lead Source Performance -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-diagram-3"></i> Lead Source Performance
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Source</th>
+                                <th>Total</th>
+                                <th>Won</th>
+                                <th>Conversion</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for source in source_data %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ source.name }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ source.total_leads }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ source.won_leads }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge {% if source.conversion_rate >= 30 %}bg-success{% elif source.conversion_rate >= 15 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ source.conversion_rate }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar {% if source.conversion_rate >= 30 %}bg-success{% elif source.conversion_rate >= 15 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             style="width: {{ source.conversion_rate }}%">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-3">
+                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                    No source data available
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Performance -->
+    {% if team_data and user.role != 'sales_rep' %}
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-people"></i> Team Performance
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Team Member</th>
+                                <th>Leads</th>
+                                <th>Won</th>
+                                <th>Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in team_data %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-2">
+                                            <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 12px;">
+                                                {{ member.first_name.0|upper }}{{ member.last_name.0|upper }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ member.get_full_name }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ member.total_leads }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ member.won_leads }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2">{{ member.conversion_rate }}%</span>
+                                        <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                                            <div class="progress-bar {% if member.conversion_rate >= 30 %}bg-success{% elif member.conversion_rate >= 15 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ member.conversion_rate }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Detailed Analytics Tables -->
+<div class="row">
+    <!-- Monthly Performance Table -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-table"></i> Monthly Performance Details
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Month</th>
+                                <th>Total Leads</th>
+                                <th>Won Deals</th>
+                                <th>Lost Deals</th>
+                                <th>In Progress</th>
+                                <th>Conversion Rate</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for month in monthly_data %}
+                            <tr>
+                                <td>
+                                    <strong>{{ month.month_short }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary fs-6">{{ month.total }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success fs-6">{{ month.won }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger fs-6">{{ month.lost }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning fs-6">{{ month.in_progress }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2 fw-bold">{{ month.conversion_rate }}%</span>
+                                        <div class="progress" style="width: 100px; height: 8px;">
+                                            <div class="progress-bar {% if month.conversion_rate >= 30 %}bg-success{% elif month.conversion_rate >= 15 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ month.conversion_rate }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if forloop.counter0 > 0 %}
+                                        {% with prev_month=monthly_data|slice:forloop.counter0|last %}
+                                            {% if month.conversion_rate > prev_month.conversion_rate %}
+                                                <i class="bi bi-arrow-up text-success"></i>
+                                            {% elif month.conversion_rate < prev_month.conversion_rate %}
+                                                <i class="bi bi-arrow-down text-danger"></i>
+                                            {% else %}
+                                                <i class="bi bi-dash text-muted"></i>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <i class="bi bi-dash text-muted"></i>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                    No monthly data available for the selected period
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #007bff 0%, #6c5ce7 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    letter-spacing: 0.5px;
+}
+
+.progress {
+    border-radius: 4px;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Chart.js responsive */
+#monthlyTrendsChart, #statusChart {
+    max-height: 400px;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Chart.js Configuration
+let monthlyChart;
+let statusChart;
+let currentChartType = 'line';
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts if chart containers exist
+    const monthlyChartContainer = document.getElementById('monthlyTrendsChart');
+    const statusChartContainer = document.getElementById('statusChart');
+    
+    if (monthlyChartContainer) {
+        initializeMonthlyChart();
+    }
+    
+    if (statusChartContainer) {
+        initializeStatusChart();
+    }
+    
+    // Show/hide custom date range
+    const dateRangeSelect = document.getElementById('analyticsDateRange');
+    const customDateRange = document.getElementById('customDateRange');
+    
+    if (dateRangeSelect && customDateRange) {
+        dateRangeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.style.display = 'block';
+            } else {
+                customDateRange.style.display = 'none';
+            }
+        });
+    }
+});
+
+// Initialize monthly trends chart
+function initializeMonthlyChart() {
+    const ctx = document.getElementById('monthlyTrendsChart');
+    if (ctx) {
+        monthlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Total Leads',
+                    data: [],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Initialize status chart
+function initializeStatusChart() {
+    const ctx = document.getElementById('statusChart');
+    if (ctx) {
+        statusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Won', 'Lost', 'In Progress'],
+                datasets: [{
+                    data: [0, 0, 0],
+                    backgroundColor: [
+                        '#28a745',
+                        '#dc3545',
+                        '#ffc107'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

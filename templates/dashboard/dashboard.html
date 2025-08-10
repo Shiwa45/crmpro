@@ -1,0 +1,596 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - CRM System{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <select class="form-select form-select-sm" id="dateRangeSelect" onchange="updateDateRange()">
+        <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
+        <option value="week" {% if date_range == 'week' %}selected{% endif %}>This Week</option>
+        <option value="month" {% if date_range == 'month' %}selected{% endif %}>This Month</option>
+        <option value="quarter" {% if date_range == 'quarter' %}selected{% endif %}>This Quarter</option>
+        <option value="year" {% if date_range == 'year' %}selected{% endif %}>This Year</option>
+    </select>
+    <a href="{% url 'leads:create' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle"></i> Add Lead
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Message -->
+{% if preferences.show_welcome_message %}
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>Welcome back, {{ user.get_full_name }}!</strong> 
+    Here's your dashboard overview for {{ date_range|title }}.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<!-- Stats Cards Row -->
+<div class="row mb-4">
+    <!-- Total Leads -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-primary text-white h-100 shadow-sm">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Leads</div>
+                        <div class="h4 mb-0 font-weight-bold" id="totalLeads">{{ stats.total_leads|floatformat:0 }}</div>
+                        <small class="mt-1">
+                            <i class="bi bi-calendar-today"></i> Today: {{ stats.today_leads }}
+                        </small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fs-2 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-primary bg-opacity-75">
+                <a href="{% url 'leads:list' %}" class="text-white text-decoration-none small">
+                    View All Leads <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Won Deals -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-success text-white h-100 shadow-sm">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Won Deals</div>
+                        <div class="h4 mb-0 font-weight-bold" id="wonLeads">{{ stats.won_leads|floatformat:0 }}</div>
+                        <small class="mt-1">
+                            <i class="bi bi-graph-up"></i> {{ stats.conversion_rate }}% conversion
+                        </small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-trophy fs-2 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-success bg-opacity-75">
+                <span class="text-white small">
+                    Revenue: ₹{{ stats.total_revenue|floatformat:0|intcomma }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hot Leads -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-warning text-white h-100 shadow-sm">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Hot Leads</div>
+                        <div class="h4 mb-0 font-weight-bold" id="hotLeads">{{ stats.hot_leads|floatformat:0 }}</div>
+                        <small class="mt-1">
+                            <i class="bi bi-thermometer-high"></i> {{ stats.hot_conversion_rate }}% convert
+                        </small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-fire fs-2 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-warning bg-opacity-75">
+                <a href="{% url 'leads:list' %}?priority=hot" class="text-white text-decoration-none small">
+                    View Hot Leads <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Leads -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-danger text-white h-100 shadow-sm">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Overdue Follow-ups</div>
+                        <div class="h4 mb-0 font-weight-bold" id="overdueLeads">{{ stats.overdue_leads|floatformat:0 }}</div>
+                        <small class="mt-1">
+                            <i class="bi bi-clock-history"></i> Need attention
+                        </small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fs-2 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-danger bg-opacity-75">
+                <span class="text-white small">
+                    Avg Deal: ₹{{ stats.avg_deal_size|floatformat:0|intcomma }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Data Row -->
+<div class="row mb-4">
+    <!-- Conversion Funnel -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-funnel"></i> Sales Funnel
+                </h6>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshFunnel()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="funnel-container">
+                    {% for stage in funnel_data %}
+                    <div class="funnel-stage mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold">{{ stage.stage }}</span>
+                            <span class="badge" style="background-color: {{ stage.color }}">
+                                {{ stage.count }} ({{ stage.percentage }}%)
+                            </span>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar" 
+                                 style="width: {{ stage.percentage }}%; background-color: {{ stage.color }};"
+                                 role="progressbar">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-lightning"></i> Quick Stats
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="stats-grid">
+                    <div class="stat-item mb-3 p-3 bg-light rounded">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">This Week</span>
+                            <span class="fw-bold text-primary">{{ stats.week_leads }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-item mb-3 p-3 bg-light rounded">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">This Month</span>
+                            <span class="fw-bold text-success">{{ stats.month_leads }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-item mb-3 p-3 bg-light rounded">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Pipeline Value</span>
+                            <span class="fw-bold text-warning">₹{{ stats.potential_revenue|floatformat:0|intcomma }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Targets -->
+                {% if kpi_targets %}
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">KPI Progress</h6>
+                    {% for target in kpi_targets %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="fw-bold">{{ target.get_kpi_type_display }}</small>
+                            <small>{{ target.current_value }}/{{ target.target_value }}</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar {% if target.completion_percentage >= 100 %}bg-success{% elif target.completion_percentage >= 75 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                 style="width: {{ target.completion_percentage }}%">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <!-- Recent Leads -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-clock-history"></i> Recent Leads
+                </h6>
+                <a href="{% url 'leads:list' %}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Lead</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lead in recent_leads %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2">
+                                            <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 14px;">
+                                                {{ lead.first_name.0|upper }}{{ lead.last_name.0|upper|default:'' }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ lead.get_full_name }}</div>
+                                            <small class="text-muted">{{ lead.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ lead.company|default:"-"|truncatechars:20 }}</td>
+                                <td>
+                                    <span class="badge badge-status-{{ lead.status }}">
+                                        {{ lead.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-priority-{{ lead.priority }}">
+                                        {{ lead.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small>{{ lead.created_at|naturaltime }}</small>
+                                </td>
+                                <td>
+                                    <a href="{% url 'leads:detail' lead.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                    No recent leads found.
+                                    <a href="{% url 'leads:create' %}" class="d-block mt-2">Create your first lead</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-lightning-charge"></i> Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'leads:create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i> Add New Lead
+                    </a>
+                    {% if user.role != 'sales_rep' %}
+                    <a href="{% url 'accounts:user_create' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-person-plus me-2"></i> Add User
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'dashboard:analytics' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-graph-up me-2"></i> View Analytics
+                    </a>
+                    <a href="{% url 'dashboard:export_report' %}?date_range={{ date_range }}" class="btn btn-outline-success">
+                        <i class="bi bi-download me-2"></i> Export Report
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lead Sources Performance -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-diagram-3"></i> Lead Sources
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for source in lead_sources %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="source-info">
+                        <div class="fw-bold">{{ source.name|truncatechars:20 }}</div>
+                        <small class="text-muted">{{ source.won_count }}/{{ source.lead_count }} converted</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-primary">{{ source.lead_count }}</span>
+                        <div class="progress mt-1" style="width: 60px; height: 4px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ source.conversion_percentage }}%">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-graph-down fs-4 d-block mb-2"></i>
+                    No source data available
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Top Performers (for managers/admins) -->
+        {% if top_performers %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-star"></i> Top Performers
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for performer in top_performers %}
+                <div class="performer-item mb-3 p-2 rounded" style="background-color: #f8f9fa;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="performer-info">
+                            <div class="fw-bold">{{ performer.get_full_name }}</div>
+                            <small class="text-muted">{{ performer.won_leads }} deals won</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-success">{{ performer.conversion_rate }}%</div>
+                            <div class="small text-muted">₹{{ performer.revenue|floatformat:0|intcomma }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Overdue Leads Alert -->
+        {% if overdue_leads %}
+        <div class="card shadow-sm border-warning">
+            <div class="card-header bg-warning bg-opacity-10">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Overdue Follow-ups
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for lead in overdue_leads|slice:":5" %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <div class="fw-bold small">{{ lead.get_full_name }}</div>
+                        <small class="text-muted">{{ lead.company|default:"No company" }}</small>
+                    </div>
+                    <div class="text-end">
+                        <a href="{% url 'leads:detail' lead.pk %}" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if overdue_leads|length > 5 %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">And {{ overdue_leads|length|add:"-5" }} more...</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Activities -->
+{% if recent_activities %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-activity"></i> Recent Activities
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="activity-timeline">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item d-flex mb-3">
+                        <div class="activity-icon me-3">
+                            <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                {% if activity.activity_type == 'call' %}
+                                <i class="bi bi-telephone"></i>
+                                {% elif activity.activity_type == 'email' %}
+                                <i class="bi bi-envelope"></i>
+                                {% elif activity.activity_type == 'meeting' %}
+                                <i class="bi bi-calendar"></i>
+                                {% else %}
+                                <i class="bi bi-chat-text"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="activity-content flex-grow-1">
+                            <div class="activity-header d-flex justify-content-between">
+                                <h6 class="mb-1">{{ activity.subject }}</h6>
+                                <small class="text-muted">{{ activity.created_at|naturaltime }}</small>
+                            </div>
+                            <p class="mb-1 small text-muted">{{ activity.description|default:"No description provided."|truncatechars:100 }}</p>
+                            <small class="text-muted">
+                                <i class="bi bi-person"></i> {{ activity.user.get_full_name }} 
+                                <i class="bi bi-arrow-right mx-1"></i>
+                                <a href="{% url 'leads:detail' activity.lead.pk %}" class="text-decoration-none">
+                                    {{ activity.lead.get_full_name }}
+                                </a>
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh functionality
+let autoRefreshInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up auto-refresh if enabled
+    {% if preferences.auto_refresh_interval %}
+    setupAutoRefresh({{ preferences.auto_refresh_interval }});
+    {% endif %}
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+
+function setupAutoRefresh(intervalSeconds) {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    autoRefreshInterval = setInterval(function() {
+        refreshDashboardStats();
+    }, intervalSeconds * 1000);
+}
+
+function refreshDashboardStats() {
+    const dateRange = document.getElementById('dateRangeSelect').value;
+    
+    fetch(`{% url 'dashboard:api_stats' %}?date_range=${dateRange}`)
+        .then(response => response.json())
+        .then(data => {
+            // Update stats with animation
+            updateStatWithAnimation('totalLeads', data.total_leads);
+            updateStatWithAnimation('wonLeads', data.won_leads);
+            updateStatWithAnimation('hotLeads', data.hot_leads);
+            updateStatWithAnimation('overdueLeads', data.overdue_leads);
+        })
+        .catch(error => {
+            console.error('Error refreshing stats:', error);
+        });
+}
+
+function updateStatWithAnimation(elementId, newValue) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const currentValue = parseInt(element.textContent);
+        const targetValue = parseInt(newValue);
+        
+        if (currentValue !== targetValue) {
+            element.style.transition = 'all 0.3s ease';
+            element.style.transform = 'scale(1.1)';
+            
+            setTimeout(() => {
+                element.textContent = targetValue.toLocaleString();
+                element.style.transform = 'scale(1)';
+            }, 150);
+        }
+    }
+}
+
+function updateDateRange() {
+    const dateRange = document.getElementById('dateRangeSelect').value;
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('date_range', dateRange);
+    window.location.href = currentUrl.toString();
+}
+
+function refreshFunnel() {
+    const button = event.target.closest('button');
+    const icon = button.querySelector('i');
+    
+    // Add spinning animation
+    icon.classList.add('fa-spin');
+    
+    // Simulate refresh (in real implementation, would make AJAX call)
+    setTimeout(() => {
+        icon.classList.remove('fa-spin');
+        location.reload();
+    }, 1000);
+}
+
+// Real-time notifications (placeholder for future WebSocket implementation)
+function showNotification(message, type = 'info') {
+    const toast = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    // Add to toast container (would need to create this)
+    const toastContainer = document.querySelector('.toast-container');
+    if (toastContainer) {
+        toastContainer.insertAdjacentHTML('beforeend', toast);
+        const toastElement = toastContainer.lastElementChild;
+        const bsToast = new bootstrap.Toast(toastElement);
+        bsToast.show();
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + N for new lead
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        window.location.href = "{% url 'leads:create' %}";
+    }
+    
+    // Ctrl/Cmd + D for dashboard
+    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        window.location.href = "{% url 'dashboard:home' %}";
+    }
+});
+</script>
+{% endblock %}
