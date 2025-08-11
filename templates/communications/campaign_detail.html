@@ -1,0 +1,252 @@
+<!-- communications/templates/communications/campaign_detail.html -->
+{% extends 'base.html' %}
+{% block title %}{{ campaign.name }} - CRM System{% endblock %}
+{% block page_title %}{{ campaign.name }}{% endblock %}
+{% block page_subtitle %}Campaign Details & Statistics{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    {% if campaign.status == 'draft' %}
+    <a href="{% url 'communications:campaign_start' campaign.pk %}" 
+       class="btn btn-success"
+       onclick="return confirm('Start this campaign now?')">
+        <i class="bi bi-play"></i> Start Campaign
+    </a>
+    {% elif campaign.status == 'sending' %}
+    <a href="{% url 'communications:campaign_pause' campaign.pk %}" 
+       class="btn btn-warning"
+       onclick="return confirm('Pause this campaign?')">
+        <i class="bi bi-pause"></i> Pause Campaign
+    </a>
+    {% endif %}
+    <a href="{% url 'communications:campaign_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Campaigns
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Campaign Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-primary">{{ campaign.total_recipients }}</h4>
+                <small class="text-muted">Total Recipients</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-success">{{ stats.total_sent }}</h4>
+                <small class="text-muted">Emails Sent</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-info">{{ stats.opened }}</h4>
+                <small class="text-muted">Opened ({{ stats.open_rate|floatformat:1 }}%)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-warning">{{ stats.clicked }}</h4>
+                <small class="text-muted">Clicked ({{ stats.click_rate|floatformat:1 }}%)</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Bar -->
+{% if campaign.status == 'sending' and campaign.total_recipients > 0 %}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Campaign Progress</h6>
+            <span class="badge bg-primary">{{ campaign.get_status_display }}</span>
+        </div>
+        {% widthratio campaign.emails_sent campaign.total_recipients 100 as progress %}
+        <div class="progress mb-2" style="height: 20px;">
+            <div class="progress-bar bg-success" style="width: {{ progress }}%">
+                {{ progress }}%
+            </div>
+        </div>
+        <small class="text-muted">
+            {{ campaign.emails_sent }} of {{ campaign.total_recipients }} emails sent
+        </small>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Campaign Details -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Campaign Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Template:</strong> {{ campaign.template.name }}</p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge 
+                                {% if campaign.status == 'draft' %}bg-secondary
+                                {% elif campaign.status == 'scheduled' %}bg-warning
+                                {% elif campaign.status == 'sending' %}bg-primary
+                                {% elif campaign.status == 'sent' %}bg-success
+                                {% elif campaign.status == 'paused' %}bg-info
+                                {% else %}bg-danger
+                                {% endif %}">
+                                {{ campaign.get_status_display }}
+                            </span>
+                        </p>
+                        {% if campaign.scheduled_at %}
+                        <p><strong>Scheduled:</strong> {{ campaign.scheduled_at|date:"M d, Y H:i" }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Created:</strong> {{ campaign.created_at|date:"M d, Y H:i" }}</p>
+                        {% if campaign.started_at %}
+                        <p><strong>Started:</strong> {{ campaign.started_at|date:"M d, Y H:i" }}</p>
+                        {% endif %}
+                        {% if campaign.completed_at %}
+                        <p><strong>Completed:</strong> {{ campaign.completed_at|date:"M d, Y H:i" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Emails -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Recent Emails</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Recipient</th>
+                                <th>Status</th>
+                                <th>Sent</th>
+                                <th>Opened</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for email in recent_emails %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'leads:detail' email.lead.pk %}" class="text-decoration-none">
+                                        {{ email.lead.get_full_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status-{{ email.status }}">
+                                        {{ email.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if email.sent_at %}
+                                        {{ email.sent_at|date:"M d, H:i" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if email.opened_at %}
+                                        {{ email.opened_at|date:"M d, H:i" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'communications:email_detail' email.pk %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    No emails in this campaign yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Performance Metrics</h6>
+            </div>
+            <div class="card-body">
+                <div class="metric mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Delivery Rate</span>
+                        <strong>{{ stats.delivery_rate|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: {{ stats.delivery_rate }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Open Rate</span>
+                        <strong>{{ stats.open_rate|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-info" style="width: {{ stats.open_rate }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Click Rate</span>
+                        <strong>{{ stats.click_rate|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-warning" style="width: {{ stats.click_rate }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric">
+                    <div class="d-flex justify-content-between">
+                        <span>Bounce Rate</span>
+                        <strong>{{ stats.bounce_rate|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-danger" style="width: {{ stats.bounce_rate }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Campaign Settings</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Batch Size:</strong> {{ campaign.batch_size }}</p>
+                <p><strong>Delay:</strong> {{ campaign.delay_between_batches }} seconds</p>
+                <p><strong>Email Config:</strong> {{ campaign.email_config.name }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

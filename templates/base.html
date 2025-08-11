@@ -434,6 +434,53 @@
                 </a>
             </li>
             
+            <!-- Communications Section -->
+            <li class="nav-item mt-4">
+                <div class="nav-link text-white-50 small text-uppercase">
+                    <strong>Communications</strong>
+                </div>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'campaign' in request.path %}active{% endif %}" 
+                   href="{% url 'communications:campaign_list' %}">
+                    <i class="bi bi-envelope-paper"></i>
+                    <span>Email Campaigns</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'template' in request.path %}active{% endif %}" 
+                   href="{% url 'communications:template_list' %}">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Email Templates</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'sequence' in request.path %}active{% endif %}" 
+                   href="{% url 'communications:sequence_list' %}">
+                    <i class="bi bi-diagram-3"></i>
+                    <span>Email Sequences</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'config' in request.path %}active{% endif %}" 
+                   href="{% url 'communications:config_list' %}">
+                    <i class="bi bi-gear"></i>
+                    <span>Email Settings</span>
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'analytics' in request.path %}active{% endif %}" 
+                   href="{% url 'communications:analytics' %}">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Email Analytics</span>
+                </a>
+            </li>
+            
             <!-- Settings Section -->
             <li class="nav-item mt-4">
                 <div class="nav-link text-white-50 small text-uppercase">
@@ -756,6 +803,12 @@
             if (e.altKey && e.key === 'a') {
                 e.preventDefault();
                 window.location.href = "{% url 'dashboard:analytics' %}";
+            }
+            
+            // Alt + C for communications campaigns
+            if (e.altKey && e.key === 'c') {
+                e.preventDefault();
+                window.location.href = "{% url 'communications:campaign_list' %}";
             }
             
             // Escape key to close modals/dropdowns

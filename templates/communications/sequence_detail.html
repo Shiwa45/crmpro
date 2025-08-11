@@ -1,0 +1,289 @@
+<!-- communications/templates/communications/sequence_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ sequence.name }} - CRM System{% endblock %}
+{% block page_title %}{{ sequence.name }}{% endblock %}
+{% block page_subtitle %}Email Sequence Management{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'communications:sequence_add_step' sequence.pk %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Step
+    </a>
+    <a href="{% url 'communications:sequence_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Sequences
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Sequence Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-primary">{{ steps|length }}</h4>
+                <small class="text-muted">Total Steps</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-success">{{ enrollments|length }}</h4>
+                <small class="text-muted">Total Enrollments</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="text-info">{{ sequence.emailsequenceenrollment_set.filter.is_active=True.count }}</h4>
+                <small class="text-muted">Active Enrollments</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h4 class="{% if sequence.is_active %}text-success{% else %}text-secondary{% endif %}">
+                    {% if sequence.is_active %}Active{% else %}Inactive{% endif %}
+                </h4>
+                <small class="text-muted">Status</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sequence Steps -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Sequence Steps</h6>
+                <a href="{% url 'communications:sequence_add_step' sequence.pk %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add Step
+                </a>
+            </div>
+            <div class="card-body">
+                {% if steps %}
+                    <div class="sequence-steps">
+                        {% for step in steps %}
+                        <div class="step-item mb-3 p-3 border rounded {% if not step.is_active %}bg-light{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="step-content flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-primary me-2">Step {{ step.step_number }}</span>
+                                        <h6 class="mb-0">{{ step.template.name }}</h6>
+                                        {% if not step.is_active %}
+                                            <span class="badge bg-secondary ms-2">Inactive</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <p class="text-muted mb-2">{{ step.template.subject }}</p>
+                                    
+                                    <div class="step-details small">
+                                        <span class="text-muted">
+                                            <i class="bi bi-clock"></i> 
+                                            {% if step.delay_days == 0 %}
+                                                Send immediately
+                                            {% else %}
+                                                Send {{ step.delay_days }} day{{ step.delay_days|pluralize }} after previous step
+                                            {% endif %}
+                                        </span>
+                                        
+                                        {% if step.send_only_if_not_replied %}
+                                            <br><span class="text-muted">
+                                                <i class="bi bi-info-circle"></i> Only if lead hasn't replied
+                                            </span>
+                                        {% endif %}
+                                        
+                                        {% if step.send_only_if_status %}
+                                            <br><span class="text-muted">
+                                                <i class="bi bi-filter"></i> Only for specific statuses
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="step-actions">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" onclick="previewStep({{ step.template.pk }})">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-list-ol fs-1 text-muted mb-3"></i>
+                        <h6>No Steps Configured</h6>
+                        <p class="text-muted">Add your first step to get started with this sequence.</p>
+                        <a href="{% url 'communications:sequence_add_step' sequence.pk %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add First Step
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sequence Info & Enrollments -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Sequence Information</h6>
+            </div>
+            <div class="card-body">
+                {% if sequence.description %}
+                    <p class="text-muted">{{ sequence.description }}</p>
+                {% endif %}
+                
+                <div class="info-item mb-2">
+                    <strong>Created:</strong> {{ sequence.created_at|date:"M d, Y" }}
+                </div>
+                
+                <div class="info-item mb-2">
+                    <strong>Delay Start:</strong> {{ sequence.delay_start_days }} day{{ sequence.delay_start_days|pluralize }}
+                </div>
+                
+                <div class="info-item mb-3">
+                    <strong>Triggers:</strong>
+                    <div class="mt-1">
+                        {% if sequence.trigger_on_lead_creation %}
+                            <span class="badge bg-light text-dark me-1 mb-1">New Leads</span>
+                        {% endif %}
+                        {% if sequence.trigger_on_status_change %}
+                            <span class="badge bg-light text-dark me-1 mb-1">Status Changes</span>
+                        {% endif %}
+                        {% if sequence.trigger_on_priority_change %}
+                            <span class="badge bg-light text-dark me-1 mb-1">Priority Changes</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Recent Enrollments</h6>
+            </div>
+            <div class="card-body">
+                {% if enrollments %}
+                    {% for enrollment in enrollments %}
+                    <div class="enrollment-item mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{% url 'leads:detail' enrollment.lead.pk %}" class="text-decoration-none">
+                                    <strong>{{ enrollment.lead.get_full_name }}</strong>
+                                </a>
+                                <div class="small text-muted">
+                                    Step {{ enrollment.current_step }} • 
+                                    {{ enrollment.emails_sent }} emails sent
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                {% if enrollment.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Completed</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted small">No enrollments yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="stepPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Step Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="stepPreviewContent">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.sequence-steps .step-item {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.sequence-steps .step-item:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.sequence-steps .step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    bottom: -15px;
+    width: 2px;
+    height: 15px;
+    background: #dee2e6;
+}
+
+.enrollment-item {
+    background-color: #f8f9fa;
+}
+</style>
+
+<script>
+function previewStep(templateId) {
+    const modal = new bootstrap.Modal(document.getElementById('stepPreviewModal'));
+    const contentDiv = document.getElementById('stepPreviewContent');
+    
+    // Show loading
+    contentDiv.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Fetch preview
+    fetch(`{% url 'communications:template_preview' 0 %}`.replace('0', templateId))
+        .then(response => response.json())
+        .then(data => {
+            contentDiv.innerHTML = `
+                <div class="mb-3">
+                    <strong>Subject:</strong> ${data.subject}
+                </div>
+                <div class="border rounded p-3" style="background-color: #f8f9fa;">
+                    ${data.html_body}
+                </div>
+            `;
+        })
+        .catch(error => {
+            contentDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    Failed to load preview: ${error.message}
+                </div>
+            `;
+        });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+<!-- communications/templates/communications/campaign_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Email Campaigns - CRM System{% endblock %}
+{% block page_title %}Email Campaigns{% endblock %}
+{% block page_subtitle %}Manage your bulk email campaigns{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'communications:campaign_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Create Campaign
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% for campaign in campaigns %}
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <a href="{% url 'communications:campaign_detail' campaign.pk %}" class="text-decoration-none">
+                        {{ campaign.name }}
+                    </a>
+                </h6>
+                <span class="badge 
+                    {% if campaign.status == 'draft' %}bg-secondary
+                    {% elif campaign.status == 'scheduled' %}bg-warning
+                    {% elif campaign.status == 'sending' %}bg-primary
+                    {% elif campaign.status == 'sent' %}bg-success
+                    {% elif campaign.status == 'paused' %}bg-info
+                    {% else %}bg-danger
+                    {% endif %}">
+                    {{ campaign.get_status_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <small class="text-muted">Template</small>
+                        <p class="mb-0">{{ campaign.template.name }}</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Recipients</small>
+                        <p class="mb-0">{{ campaign.total_recipients }} leads</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <small class="text-muted">Sent</small>
+                        <p class="mb-0 text-success">{{ campaign.emails_sent }}</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Failed</small>
+                        <p class="mb-0 text-danger">{{ campaign.emails_failed }}</p>
+                    </div>
+                </div>
+                
+                {% if campaign.status == 'sending' and campaign.total_recipients > 0 %}
+                <div class="progress mb-3" style="height: 8px;">
+                    {% widthratio campaign.emails_sent campaign.total_recipients 100 as progress %}
+                    <div class="progress-bar bg-success" style="width: {{ progress }}%"></div>
+                </div>
+                <small class="text-muted">{{ progress }}% complete</small>
+                {% endif %}
+                
+                {% if campaign.scheduled_at %}
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-calendar"></i> 
+                    Scheduled for {{ campaign.scheduled_at|date:"M d, Y H:i" }}
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Created {{ campaign.created_at|timesince }} ago
+                    </small>
+                    <div class="btn-group btn-group-sm">
+                        {% if campaign.status == 'draft' %}
+                        <a href="{% url 'communications:campaign_start' campaign.pk %}" 
+                           class="btn btn-outline-success btn-sm"
+                           onclick="return confirm('Start this campaign?')">
+                            <i class="bi bi-play"></i> Start
+                        </a>
+                        {% elif campaign.status == 'sending' %}
+                        <a href="{% url 'communications:campaign_pause' campaign.pk %}" 
+                           class="btn btn-outline-warning btn-sm"
+                           onclick="return confirm('Pause this campaign?')">
+                            <i class="bi bi-pause"></i> Pause
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'communications:campaign_detail' campaign.pk %}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-megaphone fs-1 text-muted mb-3"></i>
+                <h5>No Email Campaigns</h5>
+                <p class="text-muted">Create your first email campaign to reach multiple leads at once.</p>
+                <a href="{% url 'communications:campaign_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create Your First Campaign
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<nav aria-label="Campaign pagination">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+

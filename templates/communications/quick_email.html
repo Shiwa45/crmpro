@@ -1,0 +1,474 @@
+<!-- communications/templates/communications/quick_email.html -->
+{% extends 'base.html' %}
+
+{% block title %}Send Email to {{ lead.get_full_name }} - CRM System{% endblock %}
+{% block page_title %}Send Email to {{ lead.get_full_name }}{% endblock %}
+{% block page_subtitle %}{{ lead.company|default:"" }}{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'leads:detail' lead.pk %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Lead
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-envelope"></i> Compose Email
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="emailForm">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {{ form.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Recipient Info -->
+                    <div class="mb-3">
+                        <label class="form-label">To:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" value="{{ lead.get_full_name }} <{{ lead.email }}>" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Template Selection -->
+                    <div class="mb-3">
+                        <label for="{{ form.template.id_for_label }}" class="form-label">
+                            <i class="bi bi-file-earmark-text"></i> Use Template (Optional)
+                        </label>
+                        {{ form.template }}
+                        <div class="form-text">Select a template to auto-fill subject and content</div>
+                    </div>
+                    
+                    <!-- Subject -->
+                    <div class="mb-3">
+                        <label for="{{ form.subject.id_for_label }}" class="form-label">Subject *</label>
+                        {{ form.subject }}
+                    </div>
+                    
+                    <!-- Email Content -->
+                    <div class="mb-3">
+                        <label for="{{ form.body_html.id_for_label }}" class="form-label">Message *</label>
+                        {{ form.body_html }}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> 
+                            You can use variables like {{first_name}}, {{company}}, etc.
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="sendBtn">
+                            <i class="bi bi-send"></i> Send Email
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="previewEmail()">
+                            <i class="bi bi-eye"></i> Preview
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="saveAsDraft()">
+                            <i class="bi bi-file-plus"></i> Save as Template
+                        </button>
+                        <a href="{% url 'leads:detail' lead.pk %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Lead Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-person-badge"></i> Lead Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="lead-info">
+                    <p><strong>Name:</strong> {{ lead.get_full_name }}</p>
+                    <p><strong>Email:</strong> {{ lead.email }}</p>
+                    {% if lead.phone %}
+                    <p><strong>Phone:</strong> {{ lead.phone }}</p>
+                    {% endif %}
+                    {% if lead.company %}
+                    <p><strong>Company:</strong> {{ lead.company }}</p>
+                    {% endif %}
+                    {% if lead.job_title %}
+                    <p><strong>Job Title:</strong> {{ lead.job_title }}</p>
+                    {% endif %}
+                    <p><strong>Status:</strong> 
+                        <span class="badge badge-status-{{ lead.status }}">
+                            {{ lead.get_status_display }}
+                        </span>
+                    </p>
+                    <p><strong>Priority:</strong> 
+                        <span class="badge badge-priority-{{ lead.priority }}">
+                            {{ lead.get_priority_display }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Email Variables -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-code-square"></i> Available Variables
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">Click to insert into your email:</p>
+                <div class="variable-grid">
+                    <span class="badge bg-light text-dark me-1 mb-1 variable-tag" onclick="insertVariable('{{first_name}}')">{{first_name}}</span>
+                    <span class="badge bg-light text-dark me-1 mb-1 variable-tag" onclick="insertVariable('{{last_name}}')">{{last_name}}</span>
+                    <span class="badge bg-light text-dark me-1 mb-1 variable-tag" onclick="insertVariable('{{company}}')">{{company}}</span>
+                    <span class="badge bg-light text-dark me-1 mb-1 variable-tag" onclick="insertVariable('{{email}}')">{{email}}</span>
+                    <span class="badge bg-light text-dark me-1 mb-1 variable-tag" onclick="insertVariable('{{phone}}')">{{phone}}</span>
+                    <span class="badge bg-light text-dark me-1 mb-1 variable-tag" onclick="insertVariable('{{user_name}}')">{{user_name}}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Emails -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Previous Emails
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if lead.emails.all %}
+                    {% for email in lead.emails.all|slice:":5" %}
+                    <div class="email-history-item mb-2 p-2 border rounded">
+                        <div class="d-flex justify-content-between">
+                            <small><strong>{{ email.subject|truncatechars:30 }}</strong></small>
+                            <span class="badge badge-status-{{ email.status }}">{{ email.status }}</span>
+                        </div>
+                        <small class="text-muted">
+                            {{ email.sent_at|date:"M d, Y H:i"|default:"Not sent yet" }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted small">No previous emails sent to this lead.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="sendEmailFromPreview()">
+                    <i class="bi bi-send"></i> Send Email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Template Modal -->
+<div class="modal fade" id="saveTemplateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Save as Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="saveTemplateForm">
+                    <div class="mb-3">
+                        <label for="templateName" class="form-label">Template Name</label>
+                        <input type="text" class="form-control" id="templateName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="templateType" class="form-label">Template Type</label>
+                        <select class="form-control" id="templateType">
+                            <option value="custom">Custom</option>
+                            <option value="follow_up">Follow-up</option>
+                            <option value="welcome">Welcome</option>
+                            <option value="proposal">Proposal</option>
+                            <option value="thank_you">Thank You</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="shareTemplate">
+                        <label class="form-check-label" for="shareTemplate">
+                            Share with team
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveTemplate()">
+                    <i class="bi bi-check"></i> Save Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.variable-tag {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.variable-tag:hover {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+.email-history-item {
+    background-color: #f8f9fa;
+}
+
+.lead-info p {
+    margin-bottom: 0.5rem;
+}
+
+#id_body_html {
+    min-height: 200px;
+}
+</style>
+
+<script>
+// Template selection handler
+document.getElementById('id_template').addEventListener('change', function() {
+    const templateId = this.value;
+    if (templateId) {
+        // Fetch template content and populate fields
+        fetch(`{% url 'communications:template_preview' 0 %}`.replace('0', templateId))
+            .then(response => response.json())
+            .then(data => {
+                // Replace variables with actual lead data
+                const leadData = {
+                    '{{lead_name}}': '{{ lead.get_full_name }}',
+                    '{{first_name}}': '{{ lead.first_name }}',
+                    '{{last_name}}': '{{ lead.last_name|default:"" }}',
+                    '{{company}}': '{{ lead.company|default:"" }}',
+                    '{{email}}': '{{ lead.email }}',
+                    '{{phone}}': '{{ lead.phone|default:"" }}',
+                    '{{user_name}}': '{{ user.get_full_name }}',
+                    '{{user_email}}': '{{ user.email }}',
+                    '{{current_date}}': new Date().toLocaleDateString()
+                };
+                
+                let subject = data.subject;
+                let body = data.html_body;
+                
+                Object.keys(leadData).forEach(variable => {
+                    const regex = new RegExp(variable.replace(/[{}]/g, '\\$&'), 'g');
+                    subject = subject.replace(regex, leadData[variable]);
+                    body = body.replace(regex, leadData[variable]);
+                });
+                
+                document.getElementById('id_subject').value = subject;
+                document.getElementById('id_body_html').value = body;
+            })
+            .catch(error => {
+                console.error('Error loading template:', error);
+                showToast('Failed to load template', 'error');
+            });
+    }
+});
+
+function insertVariable(variable) {
+    const textarea = document.getElementById('id_body_html');
+    const cursorPos = textarea.selectionStart;
+    const textBefore = textarea.value.substring(0, cursorPos);
+    const textAfter = textarea.value.substring(cursorPos);
+    
+    textarea.value = textBefore + variable + textAfter;
+    textarea.focus();
+    textarea.setSelectionRange(cursorPos + variable.length, cursorPos + variable.length);
+}
+
+function previewEmail() {
+    const subject = document.getElementById('id_subject').value;
+    const body = document.getElementById('id_body_html').value;
+    
+    if (!subject && !body) {
+        showToast('Please enter some content to preview', 'warning');
+        return;
+    }
+    
+    // Replace variables with actual lead data
+    const leadData = {
+        '{{lead_name}}': '{{ lead.get_full_name }}',
+        '{{first_name}}': '{{ lead.first_name }}',
+        '{{last_name}}': '{{ lead.last_name|default:"" }}',
+        '{{company}}': '{{ lead.company|default:"" }}',
+        '{{email}}': '{{ lead.email }}',
+        '{{phone}}': '{{ lead.phone|default:"" }}',
+        '{{user_name}}': '{{ user.get_full_name }}',
+        '{{user_email}}': '{{ user.email }}',
+        '{{current_date}}': new Date().toLocaleDateString()
+    };
+    
+    let previewSubject = subject;
+    let previewBody = body;
+    
+    Object.keys(leadData).forEach(variable => {
+        const regex = new RegExp(variable.replace(/[{}]/g, '\\$&'), 'g');
+        previewSubject = previewSubject.replace(regex, leadData[variable]);
+        previewBody = previewBody.replace(regex, leadData[variable]);
+    });
+    
+    document.getElementById('previewContent').innerHTML = `
+        <div class="email-preview">
+            <div class="email-header mb-3 p-3 border-bottom">
+                <div class="row">
+                    <div class="col-sm-2"><strong>To:</strong></div>
+                    <div class="col-sm-10">{{ lead.get_full_name }} &lt;{{ lead.email }}&gt;</div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-2"><strong>From:</strong></div>
+                    <div class="col-sm-10">{{ user.get_full_name }} &lt;{{ user.email }}&gt;</div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-2"><strong>Subject:</strong></div>
+                    <div class="col-sm-10">${previewSubject}</div>
+                </div>
+            </div>
+            <div class="email-body p-3" style="background-color: #f8f9fa;">
+                ${previewBody}
+            </div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+}
+
+function sendEmailFromPreview() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('previewModal'));
+    modal.hide();
+    document.getElementById('emailForm').submit();
+}
+
+function saveAsDraft() {
+    const subject = document.getElementById('id_subject').value;
+    const body = document.getElementById('id_body_html').value;
+    
+    if (!subject && !body) {
+        showToast('Please enter some content to save as template', 'warning');
+        return;
+    }
+    
+    // Pre-fill template name with subject
+    document.getElementById('templateName').value = subject;
+    
+    const modal = new bootstrap.Modal(document.getElementById('saveTemplateModal'));
+    modal.show();
+}
+
+function saveTemplate() {
+    const templateName = document.getElementById('templateName').value;
+    const templateType = document.getElementById('templateType').value;
+    const shareTemplate = document.getElementById('shareTemplate').checked;
+    const subject = document.getElementById('id_subject').value;
+    const body = document.getElementById('id_body_html').value;
+    
+    if (!templateName) {
+        showToast('Please enter a template name', 'warning');
+        return;
+    }
+    
+    // Create template via AJAX
+    const formData = new FormData();
+    formData.append('name', templateName);
+    formData.append('template_type', templateType);
+    formData.append('subject', subject);
+    formData.append('body_html', body);
+    formData.append('is_shared', shareTemplate);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "communications:template_create" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            showToast('Template saved successfully!', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('saveTemplateModal'));
+            modal.hide();
+        } else {
+            showToast('Failed to save template', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving template:', error);
+        showToast('Failed to save template', 'error');
+    });
+}
+
+// Form submission with loading state
+document.getElementById('emailForm').addEventListener('submit', function(e) {
+    const sendBtn = document.getElementById('sendBtn');
+    setLoadingState(sendBtn, true);
+});
+
+// Auto-save to localStorage
+let autoSaveTimer;
+function setupAutoSave() {
+    const fields = ['id_subject', 'id_body_html'];
+    
+    fields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', function() {
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(() => {
+                    localStorage.setItem('quick_email_' + fieldId, field.value);
+                }, 2000);
+            });
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupAutoSave();
+    
+    // Restore from localStorage if available
+    const fields = ['id_subject', 'id_body_html'];
+    fields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        const backup = localStorage.getItem('quick_email_' + fieldId);
+        if (field && backup && !field.value) {
+            field.value = backup;
+        }
+    });
+});
+
+// Clear backup on successful send
+document.getElementById('emailForm').addEventListener('submit', function() {
+    const fields = ['id_subject', 'id_body_html'];
+    fields.forEach(fieldId => {
+        localStorage.removeItem('quick_email_' + fieldId);
+    });
+});
+</script>
+{% endblock %}

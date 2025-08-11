@@ -1,0 +1,883 @@
+<!-- communications/templates/communications/analytics.html -->
+{% extends 'base.html' %}
+
+{% block title %}Email Analytics - CRM System{% endblock %}
+{% block page_title %}Email Analytics{% endblock %}
+{% block page_subtitle %}Performance insights and metrics{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <button class="btn btn-outline-primary btn-sm" onclick="refreshAnalytics()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+    <button class="btn btn-success btn-sm" onclick="exportAnalytics()">
+        <i class="bi bi-download"></i> Export Report
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">From Date</label>
+                {{ form.date_from }}
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">To Date</label>
+                {{ form.date_to }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Campaign</label>
+                {{ form.campaign }}
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Template</label>
+                {{ form.template }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary mt-4">
+                    <i class="bi bi-filter"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Overview Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.total_sent }}</h3>
+                <small>Emails Sent</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.delivery_rate|floatformat:1 }}%</h3>
+                <small>Delivery Rate</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.open_rate|floatformat:1 }}%</h3>
+                <small>Open Rate</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.click_rate|floatformat:1 }}%</h3>
+                <small>Click Rate</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Campaigns -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-megaphone"></i> Recent Campaigns
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if recent_campaigns %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th>Status</th>
+                                    <th>Sent</th>
+                                    <th>Open Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in recent_campaigns %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'communications:campaign_detail' campaign.pk %}" class="text-decoration-none">
+                                            {{ campaign.name|truncatechars:30 }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if campaign.status == 'sent' %}bg-success
+                                            {% elif campaign.status == 'sending' %}bg-primary
+                                            {% elif campaign.status == 'draft' %}bg-secondary
+                                            {% else %}bg-warning
+                                            {% endif %}">
+                                            {{ campaign.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ campaign.emails_sent }}</td>
+                                    <td>
+                                        {% if campaign.emails_sent > 0 %}
+                                            <!-- Calculate open rate here or pass from view -->
+                                            <span class="text-info">--</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No campaigns yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Templates -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-file-earmark-text"></i> Top Performing Templates
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if top_templates %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Template</th>
+                                    <th>Usage</th>
+                                    <th>Open Rate</th>
+                                    <th>Click Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for template in top_templates %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'communications:template_detail' template.pk %}" class="text-decoration-none">
+                                            {{ template.name|truncatechars:25 }}
+                                        </a>
+                                    </td>
+                                    <td>{{ template.usage_count }}</td>
+                                    <td><span class="text-info">--</span></td>
+                                    <td><span class="text-warning">--</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No templates used yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Email Performance Over Time
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Email Status Distribution
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Metrics -->
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-list-check"></i> Detailed Metrics
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="metric-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Total Emails Sent</span>
+                        <strong class="text-primary">{{ stats.total_sent }}</strong>
+                    </div>
+                </div>
+                
+                <div class="metric-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Successfully Delivered</span>
+                        <strong class="text-success">{{ stats.delivered }}</strong>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-success" style="width: {{ stats.delivery_rate }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Emails Opened</span>
+                        <strong class="text-info">{{ stats.opened }}</strong>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-info" style="width: {{ stats.open_rate }}%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="metric-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Links Clicked</span>
+                        <strong class="text-warning">{{ stats.clicked }}</strong>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-warning" style="width: {{ stats.click_rate }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="metric-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Bounce Rate</span>
+                        <strong class="text-danger">{{ stats.bounce_rate|default:0|floatformat:1 }}%</strong>
+                    </div>
+                </div>
+                
+                <div class="metric-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Avg Response Time</span>
+                        <strong class="text-muted">2.4 hours</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshAnalytics() {
+    window.location.reload();
+}
+
+function exportAnalytics() {
+    // Create CSV export of analytics data
+    const csvData = [
+        ['Metric', 'Value'],
+        ['Total Sent', '{{ stats.total_sent }}'],
+        ['Delivery Rate', '{{ stats.delivery_rate|floatformat:1 }}%'],
+        ['Open Rate', '{{ stats.open_rate|floatformat:1 }}%'],
+        ['Click Rate', '{{ stats.click_rate|floatformat:1 }}%']
+    ];
+    
+    const csvContent = csvData.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'email_analytics.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// Initialize charts (placeholder - would need actual Chart.js implementation)
+document.addEventListener('DOMContentLoaded', function() {
+    // Performance chart would go here
+    // Status chart would go here
+});
+</script>
+{% endblock %}
+
+<!-- communications/templates/communications/email_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Email History - CRM System{% endblock %}
+{% block page_title %}Email History{% endblock %}
+{% block page_subtitle %}All sent emails and their status{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-filter"></i> Filter
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="?status=sent">Sent</a></li>
+            <li><a class="dropdown-item" href="?status=opened">Opened</a></li>
+            <li><a class="dropdown-item" href="?status=clicked">Clicked</a></li>
+            <li><a class="dropdown-item" href="?status=failed">Failed</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'communications:email_list' %}">Clear Filter</a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <select name="status" class="form-control">
+                    <option value="">All Status</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="lead" class="form-control" placeholder="Search by lead name..." value="{{ request.GET.lead }}">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="subject" class="form-control" placeholder="Search by subject..." value="{{ request.GET.subject }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i> Search
+                </button>
+                <a href="{% url 'communications:email_list' %}" class="btn btn-outline-secondary ms-2">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Email List -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Subject</th>
+                        <th>Recipient</th>
+                        <th>Status</th>
+                        <th>Sent</th>
+                        <th>Opened</th>
+                        <th>Campaign</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for email in emails %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'communications:email_detail' email.pk %}" class="text-decoration-none">
+                                <strong>{{ email.subject|truncatechars:50 }}</strong>
+                            </a>
+                            {% if email.template %}
+                                <br><small class="text-muted">Template: {{ email.template.name }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-2">
+                                    <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 12px;">
+                                        {{ email.lead.first_name.0|upper }}{{ email.lead.last_name.0|upper|default:'' }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <a href="{% url 'leads:detail' email.lead.pk %}" class="text-decoration-none">
+                                        {{ email.lead.get_full_name }}
+                                    </a>
+                                    <br><small class="text-muted">{{ email.to_email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if email.status == 'sent' %}bg-primary
+                                {% elif email.status == 'delivered' %}bg-info
+                                {% elif email.status == 'opened' %}bg-success
+                                {% elif email.status == 'clicked' %}bg-warning
+                                {% elif email.status == 'failed' %}bg-danger
+                                {% elif email.status == 'bounced' %}bg-danger
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ email.get_status_display }}
+                            </span>
+                            
+                            {% if email.open_count > 0 %}
+                                <br><small class="text-muted">{{ email.open_count }} open{{ email.open_count|pluralize }}</small>
+                            {% endif %}
+                            
+                            {% if email.click_count > 0 %}
+                                <br><small class="text-muted">{{ email.click_count }} click{{ email.click_count|pluralize }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if email.sent_at %}
+                                {{ email.sent_at|date:"M d, Y" }}<br>
+                                <small class="text-muted">{{ email.sent_at|time:"H:i" }}</small>
+                            {% else %}
+                                <span class="text-muted">Not sent</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if email.opened_at %}
+                                {{ email.opened_at|date:"M d, Y" }}<br>
+                                <small class="text-muted">{{ email.opened_at|time:"H:i" }}</small>
+                            {% elif email.status in 'sent,delivered' %}
+                                <span class="text-muted">Not opened</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if email.campaign %}
+                                <a href="{% url 'communications:campaign_detail' email.campaign.pk %}" class="text-decoration-none">
+                                    {{ email.campaign.name|truncatechars:20 }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">Individual</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'communications:email_detail' email.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if email.status == 'failed' and email.retry_count < email.max_retries %}
+                                <button class="btn btn-outline-warning btn-sm" onclick="retryEmail({{ email.pk }})">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-envelope fs-4 d-block mb-2"></i>
+                            No emails found.
+                            {% if not request.GET.status %}
+                                <a href="{% url 'communications:send_quick_email' 1 %}" class="d-block mt-2">Send your first email</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Email pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function retryEmail(emailId) {
+    if (confirm('Retry sending this email?')) {
+        fetch(`/communications/emails/${emailId}/retry/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Email queued for retry', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Failed to retry email', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Error retrying email', 'error');
+        });
+    }
+}
+</script>
+{% endblock %}
+
+<!-- communications/templates/communications/email_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}Email Details - CRM System{% endblock %}
+{% block page_title %}Email Details{% endblock %}
+{% block page_subtitle %}{{ email.subject }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    {% if email.status == 'failed' and email.retry_count < email.max_retries %}
+    <button class="btn btn-warning" onclick="retryEmail()">
+        <i class="bi bi-arrow-clockwise"></i> Retry Send
+    </button>
+    {% endif %}
+    <a href="{% url 'communications:send_quick_email' email.lead.pk %}" class="btn btn-primary">
+        <i class="bi bi-envelope"></i> Send New Email
+    </a>
+    <a href="{% url 'communications:email_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Emails
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Email Content -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Email Content</h6>
+            </div>
+            <div class="card-body">
+                <!-- Email Headers -->
+                <div class="email-headers mb-4 p-3 bg-light rounded">
+                    <div class="row">
+                        <div class="col-sm-2"><strong>From:</strong></div>
+                        <div class="col-sm-10">{{ email.from_name }} &lt;{{ email.from_email }}&gt;</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2"><strong>To:</strong></div>
+                        <div class="col-sm-10">
+                            <a href="{% url 'leads:detail' email.lead.pk %}" class="text-decoration-none">
+                                {{ email.to_name }} &lt;{{ email.to_email }}&gt;
+                            </a>
+                        </div>
+                    </div>
+                    {% if email.reply_to %}
+                    <div class="row">
+                        <div class="col-sm-2"><strong>Reply-To:</strong></div>
+                        <div class="col-sm-10">{{ email.reply_to }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-sm-2"><strong>Subject:</strong></div>
+                        <div class="col-sm-10">{{ email.subject }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-2"><strong>Sent:</strong></div>
+                        <div class="col-sm-10">
+                            {% if email.sent_at %}
+                                {{ email.sent_at|date:"M d, Y H:i" }}
+                            {% else %}
+                                Not sent yet
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Email Body -->
+                <div class="email-body p-3 border rounded" style="background-color: #f8f9fa;">
+                    {{ email.body_html|safe }}
+                </div>
+                
+                {% if email.body_text %}
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleTextVersion()">
+                        <i class="bi bi-file-text"></i> View Plain Text Version
+                    </button>
+                    <div id="textVersion" class="mt-3 p-3 border rounded bg-white" style="display: none;">
+                        <pre class="mb-0">{{ email.body_text }}</pre>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Tracking Events -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-activity"></i> Email Activity
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if tracking_events %}
+                    <div class="timeline">
+                        {% for event in tracking_events %}
+                        <div class="timeline-item mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="timeline-icon me-3">
+                                    {% if event.event_type == 'sent' %}
+                                        <i class="bi bi-send text-primary"></i>
+                                    {% elif event.event_type == 'delivered' %}
+                                        <i class="bi bi-check-circle text-success"></i>
+                                    {% elif event.event_type == 'opened' %}
+                                        <i class="bi bi-envelope-open text-info"></i>
+                                    {% elif event.event_type == 'clicked' %}
+                                        <i class="bi bi-link text-warning"></i>
+                                    {% elif event.event_type == 'bounced' %}
+                                        <i class="bi bi-exclamation-triangle text-danger"></i>
+                                    {% else %}
+                                        <i class="bi bi-circle text-muted"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong>{{ event.get_event_type_display }}</strong>
+                                        <small class="text-muted">{{ event.timestamp|date:"M d, Y H:i:s" }}</small>
+                                    </div>
+                                    {% if event.ip_address %}
+                                        <small class="text-muted">IP: {{ event.ip_address }}</small>
+                                    {% endif %}
+                                    {% if event.clicked_url %}
+                                        <div class="small">Clicked: <a href="{{ event.clicked_url }}" target="_blank">{{ event.clicked_url|truncatechars:50 }}</a></div>
+                                    {% endif %}
+                                    {% if event.user_agent %}
+                                        <div class="small text-muted">{{ event.user_agent|truncatechars:80 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No tracking events recorded.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Email Information Sidebar -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Email Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="info-item mb-3">
+                    <strong>Status:</strong>
+                    <span class="badge 
+                        {% if email.status == 'sent' %}bg-primary
+                        {% elif email.status == 'delivered' %}bg-info
+                        {% elif email.status == 'opened' %}bg-success
+                        {% elif email.status == 'clicked' %}bg-warning
+                        {% elif email.status == 'failed' %}bg-danger
+                        {% elif email.status == 'bounced' %}bg-danger
+                        {% else %}bg-secondary
+                        {% endif %} ms-2">
+                        {{ email.get_status_display }}
+                    </span>
+                </div>
+                
+                {% if email.template %}
+                <div class="info-item mb-3">
+                    <strong>Template:</strong>
+                    <a href="{% url 'communications:template_detail' email.template.pk %}" class="text-decoration-none">
+                        {{ email.template.name }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if email.campaign %}
+                <div class="info-item mb-3">
+                    <strong>Campaign:</strong>
+                    <a href="{% url 'communications:campaign_detail' email.campaign.pk %}" class="text-decoration-none">
+                        {{ email.campaign.name }}
+                    </a>
+                </div>
+                {% endif %}
+                
+                <div class="info-item mb-3">
+                    <strong>Created:</strong> {{ email.created_at|date:"M d, Y H:i" }}
+                </div>
+                
+                {% if email.sent_at %}
+                <div class="info-item mb-3">
+                    <strong>Sent:</strong> {{ email.sent_at|date:"M d, Y H:i" }}
+                </div>
+                {% endif %}
+                
+                {% if email.opened_at %}
+                <div class="info-item mb-3">
+                    <strong>First Opened:</strong> {{ email.opened_at|date:"M d, Y H:i" }}
+                </div>
+                {% endif %}
+                
+                {% if email.clicked_at %}
+                <div class="info-item mb-3">
+                    <strong>First Clicked:</strong> {{ email.clicked_at|date:"M d, Y H:i" }}
+                </div>
+                {% endif %}
+                
+                <div class="info-item mb-3">
+                    <strong>Open Count:</strong> {{ email.open_count }}
+                </div>
+                
+                <div class="info-item mb-3">
+                    <strong>Click Count:</strong> {{ email.click_count }}
+                </div>
+                
+                {% if email.error_message %}
+                <div class="info-item mb-3">
+                    <strong>Error:</strong>
+                    <div class="text-danger small">{{ email.error_message }}</div>
+                </div>
+                {% endif %}
+                
+                <div class="info-item mb-3">
+                    <strong>Tracking ID:</strong>
+                    <code class="small">{{ email.tracking_id }}</code>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lead Information -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Lead Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar-lg me-3">
+                        <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            {{ email.lead.first_name.0|upper }}{{ email.lead.last_name.0|upper|default:'' }}
+                        </div>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">
+                            <a href="{% url 'leads:detail' email.lead.pk %}" class="text-decoration-none">
+                                {{ email.lead.get_full_name }}
+                            </a>
+                        </h6>
+                        <small class="text-muted">{{ email.lead.company|default:"No company" }}</small>
+                    </div>
+                </div>
+                
+                <div class="info-item mb-2">
+                    <strong>Email:</strong> {{ email.lead.email }}
+                </div>
+                
+                {% if email.lead.phone %}
+                <div class="info-item mb-2">
+                    <strong>Phone:</strong> {{ email.lead.phone }}
+                </div>
+                {% endif %}
+                
+                <div class="info-item mb-2">
+                    <strong>Status:</strong> 
+                    <span class="badge badge-status-{{ email.lead.status }}">
+                        {{ email.lead.get_status_display }}
+                    </span>
+                </div>
+                
+                <div class="info-item mb-2">
+                    <strong>Priority:</strong> 
+                    <span class="badge badge-priority-{{ email.lead.priority }}">
+                        {{ email.lead.get_priority_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-item {
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 30px;
+    width: 2px;
+    height: 30px;
+    background: #dee2e6;
+}
+
+.timeline-icon {
+    width: 20px;
+    font-size: 16px;
+}
+
+.email-headers .row {
+    margin-bottom: 0.5rem;
+}
+</style>
+
+<script>
+function toggleTextVersion() {
+    const textVersion = document.getElementById('textVersion');
+    if (textVersion.style.display === 'none') {
+        textVersion.style.display = 'block';
+    } else {
+        textVersion.style.display = 'none';
+    }
+}
+
+function retryEmail() {
+    if (confirm('Retry sending this email?')) {
+        fetch(`/communications/emails/{{ email.pk }}/retry/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Email queued for retry', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast('Failed to retry email', 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Error retrying email', 'error');
+        });
+    }
+}
+</script>
+{% endblock %}

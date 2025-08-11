@@ -1,0 +1,170 @@
+<!-- communications/templates/communications/sequence_form.html -->
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if object %}Edit{% else %}Create{% endif %} Email Sequence - CRM System
+{% endblock %}
+
+{% block page_title %}
+    {% if object %}Edit{% else %}Create{% endif %} Email Sequence
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'communications:sequence_list' %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Sequences
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Sequence Configuration</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {{ form.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Sequence Name *</label>
+                        {{ form.name }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.delay_start_days.id_for_label }}" class="form-label">Delay Start (Days)</label>
+                                {{ form.delay_start_days }}
+                                <div class="form-text">{{ form.delay_start_days.help_text }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check mt-4">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active Sequence
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6>Trigger Conditions</h6>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.trigger_on_lead_creation }}
+                        <label class="form-check-label" for="{{ form.trigger_on_lead_creation.id_for_label }}">
+                            Start sequence for new leads
+                        </label>
+                        <div class="form-text">{{ form.trigger_on_lead_creation.help_text }}</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Trigger on Status Change</label>
+                                {% for choice in form.trigger_on_status_change %}
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                <div class="form-text">{{ form.trigger_on_status_change.help_text }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Trigger on Priority Change</label>
+                                {% for choice in form.trigger_on_priority_change %}
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                <div class="form-text">{{ form.trigger_on_priority_change.help_text }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> 
+                            {% if object %}Update{% else %}Create{% endif %} Sequence
+                        </button>
+                        <a href="{% url 'communications:sequence_list' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Sequence Examples</h6>
+            </div>
+            <div class="card-body">
+                <div class="example-sequence mb-3">
+                    <h6 class="small fw-bold">Welcome Series</h6>
+                    <ul class="small">
+                        <li>Day 0: Welcome email</li>
+                        <li>Day 3: Company introduction</li>
+                        <li>Day 7: Success stories</li>
+                        <li>Day 14: Special offer</li>
+                    </ul>
+                </div>
+                
+                <div class="example-sequence mb-3">
+                    <h6 class="small fw-bold">Follow-up Series</h6>
+                    <ul class="small">
+                        <li>Day 1: Thank you for meeting</li>
+                        <li>Day 5: Check-in email</li>
+                        <li>Day 10: Case study</li>
+                        <li>Day 20: Final follow-up</li>
+                    </ul>
+                </div>
+                
+                <div class="example-sequence">
+                    <h6 class="small fw-bold">Re-engagement</h6>
+                    <ul class="small">
+                        <li>Day 0: We miss you</li>
+                        <li>Day 7: Special discount</li>
+                        <li>Day 14: Last chance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Best Practices</h6>
+            </div>
+            <div class="card-body">
+                <ul class="small">
+                    <li>Start with a clear welcome message</li>
+                    <li>Space emails 3-7 days apart</li>
+                    <li>Include value in every email</li>
+                    <li>Test different timing and content</li>
+                    <li>Monitor open and click rates</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

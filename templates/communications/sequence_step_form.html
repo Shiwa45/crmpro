@@ -1,0 +1,169 @@
+<!-- communications/templates/communications/sequence_step_form.html -->
+{% extends 'base.html' %}
+
+{% block title %}Add Step to {{ sequence.name }} - CRM System{% endblock %}
+{% block page_title %}Add Step to {{ sequence.name }}{% endblock %}
+{% block page_subtitle %}Configure sequence step{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'communications:sequence_detail' sequence.pk %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Sequence
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Step Configuration</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {{ form.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.step_number.id_for_label }}" class="form-label">Step Number *</label>
+                                {{ form.step_number }}
+                                <div class="form-text">Order of this step in the sequence</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.delay_days.id_for_label }}" class="form-label">Delay (Days) *</label>
+                                {{ form.delay_days }}
+                                <div class="form-text">Days to wait after previous step</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.template.id_for_label }}" class="form-label">Email Template *</label>
+                        {{ form.template }}
+                        <div class="form-text">Choose the email template for this step</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                {{ form.send_only_if_not_replied }}
+                                <label class="form-check-label" for="{{ form.send_only_if_not_replied.id_for_label }}">
+                                    Only send if lead hasn't replied
+                                </label>
+                                <div class="form-text">Skip this step if the lead has responded</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Send Only for Specific Statuses</label>
+                                {% for choice in form.send_only_if_status %}
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                                <div class="form-text">Leave empty to send for all statuses</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Add Step
+                        </button>
+                        <a href="{% url 'communications:sequence_detail' sequence.pk %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Step Guidelines</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="small fw-bold">Timing Recommendations</h6>
+                    <ul class="small">
+                        <li>Day 0-1: Immediate follow-up</li>
+                        <li>Day 3-5: First check-in</li>
+                        <li>Day 7-10: Value proposition</li>
+                        <li>Day 14-21: Case study/offer</li>
+                        <li>Day 30+: Re-engagement</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="small fw-bold">Content Flow</h6>
+                    <ul class="small">
+                        <li>Start with value</li>
+                        <li>Build relationship</li>
+                        <li>Provide solutions</li>
+                        <li>Include clear CTA</li>
+                        <li>End with next steps</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-info small">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Tip:</strong> Test different timing and content to find what works best for your audience.
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Current Sequence</h6>
+            </div>
+            <div class="card-body">
+                {% if sequence.steps.all %}
+                    <div class="sequence-overview">
+                        {% for step in sequence.steps.all %}
+                        <div class="step-item small mb-2 p-2 border rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">Step {{ step.step_number }}</span>
+                                <small class="text-muted">{{ step.template.name }}</small>
+                            </div>
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    {% if step.delay_days == 0 %}
+                                        Immediate
+                                    {% else %}
+                                        +{{ step.delay_days }} days
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted small">No steps configured yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.step-item {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.step-item:hover {
+    background-color: #e9ecef;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,162 @@
+<!-- communications/templates/communications/sequence_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Email Sequences - CRM System{% endblock %}
+{% block page_title %}Email Sequences{% endblock %}
+{% block page_subtitle %}Automated email workflows{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'communications:sequence_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Create Sequence
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% for sequence in sequences %}
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <a href="{% url 'communications:sequence_detail' sequence.pk %}" class="text-decoration-none">
+                        {{ sequence.name }}
+                    </a>
+                </h6>
+                <div>
+                    {% if sequence.is_active %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if sequence.description %}
+                <p class="card-text small">{{ sequence.description|truncatechars:100 }}</p>
+                {% endif %}
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <small class="text-muted">Total Steps</small>
+                        <p class="mb-0 fw-bold">{{ sequence.steps.all|length }}</p>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Enrollments</small>
+                        <p class="mb-0 fw-bold text-success">{{ sequence.emailsequenceenrollment_set.all|length }}</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <small class="text-muted">Triggers</small>
+                        <div class="mt-1">
+                            {% if sequence.trigger_on_lead_creation %}
+                                <span class="badge bg-light text-dark me-1">New Leads</span>
+                            {% endif %}
+                            {% if sequence.trigger_on_status_change %}
+                                <span class="badge bg-light text-dark me-1">Status Change</span>
+                            {% endif %}
+                            {% if sequence.trigger_on_priority_change %}
+                                <span class="badge bg-light text-dark me-1">Priority Change</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if sequence.delay_start_days > 0 %}
+                <p class="small text-muted mb-0">
+                    <i class="bi bi-clock"></i> Starts {{ sequence.delay_start_days }} day{{ sequence.delay_start_days|pluralize }} after trigger
+                </p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Created {{ sequence.created_at|timesince }} ago
+                    </small>
+                    <a href="{% url 'communications:sequence_detail' sequence.pk %}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye"></i> Manage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-arrow-repeat fs-1 text-muted mb-3"></i>
+                <h5>No Email Sequences</h5>
+                <p class="text-muted">Create automated email sequences to nurture leads over time.</p>
+                <a href="{% url 'communications:sequence_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create Your First Sequence
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Sequence Examples and Best Practices -->
+<div class="row mt-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Sequence Examples</h6>
+            </div>
+            <div class="card-body">
+                <div class="example-sequence mb-3">
+                    <h6 class="small fw-bold">Welcome Series</h6>
+                    <ul class="small">
+                        <li>Day 0: Welcome email</li>
+                        <li>Day 3: Company introduction</li>
+                        <li>Day 7: Success stories</li>
+                        <li>Day 14: Special offer</li>
+                    </ul>
+                </div>
+                
+                <div class="example-sequence mb-3">
+                    <h6 class="small fw-bold">Follow-up Series</h6>
+                    <ul class="small">
+                        <li>Day 1: Thank you for meeting</li>
+                        <li>Day 5: Check-in email</li>
+                        <li>Day 10: Case study</li>
+                        <li>Day 20: Final follow-up</li>
+                    </ul>
+                </div>
+                
+                <div class="example-sequence">
+                    <h6 class="small fw-bold">Re-engagement</h6>
+                    <ul class="small">
+                        <li>Day 0: We miss you</li>
+                        <li>Day 7: Special discount</li>
+                        <li>Day 14: Last chance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Best Practices</h6>
+            </div>
+            <div class="card-body">
+                <ul class="small">
+                    <li>Start with a clear welcome message</li>
+                    <li>Space emails 3-7 days apart</li>
+                    <li>Include value in every email</li>
+                    <li>Test different timing and content</li>
+                    <li>Monitor open and click rates</li>
+                    <li>Set clear expectations upfront</li>
+                    <li>Provide easy unsubscribe options</li>
+                    <li>Segment your audience appropriately</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

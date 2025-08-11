@@ -12,8 +12,7 @@ SECRET_KEY = config('SECRET_KEY', default='your-secret-key-here')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
-
+ALLOWED_HOSTS = ['*']
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -32,6 +31,7 @@ INSTALLED_APPS = [
     'accounts',
     'leads',
     'dashboard',
+    'communications',
 ]
 
 MIDDLEWARE = [
@@ -112,6 +112,9 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 # Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Site Configuration
+SITE_DOMAIN = 'localhost:8000'  # Change this to your actual domain in production
 
 # Login/Logout URLs
 LOGIN_URL = 'accounts:login'

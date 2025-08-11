@@ -1,0 +1,259 @@
+<!-- communications/templates/communications/config_form.html -->
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if object %}Update{% else %}Add{% endif %} Email Configuration - CRM System
+{% endblock %}
+
+{% block page_title %}
+    {% if object %}Update{% else %}Add{% endif %} Email Configuration
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'communications:config_list' %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Configurations
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Configuration Details</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {{ form.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Configuration Name *</label>
+                                {{ form.name }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.provider.id_for_label }}" class="form-label">Email Provider *</label>
+                                {{ form.provider }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6>SMTP Settings</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.smtp_host.id_for_label }}" class="form-label">SMTP Host *</label>
+                                {{ form.smtp_host }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.smtp_port.id_for_label }}" class="form-label">SMTP Port *</label>
+                                {{ form.smtp_port }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.smtp_username.id_for_label }}" class="form-label">Username *</label>
+                                {{ form.smtp_username }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.smtp_password.id_for_label }}" class="form-label">Password *</label>
+                                {{ form.smtp_password }}
+                                <div class="form-text">{{ form.smtp_password.help_text }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                {{ form.use_tls }}
+                                <label class="form-check-label" for="{{ form.use_tls.id_for_label }}">
+                                    Use TLS Encryption
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                {{ form.use_ssl }}
+                                <label class="form-check-label" for="{{ form.use_ssl.id_for_label }}">
+                                    Use SSL Encryption
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6>Sender Information</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.from_email.id_for_label }}" class="form-label">From Email *</label>
+                                {{ form.from_email }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.from_name.id_for_label }}" class="form-label">From Name *</label>
+                                {{ form.from_name }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.reply_to.id_for_label }}" class="form-label">Reply To Email</label>
+                                {{ form.reply_to }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.daily_limit.id_for_label }}" class="form-label">Daily Email Limit</label>
+                                {{ form.daily_limit }}
+                                <div class="form-text">{{ form.daily_limit.help_text }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6>Configuration Options</h6>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.is_default }}
+                        <label class="form-check-label" for="{{ form.is_default.id_for_label }}">
+                            Set as Default Configuration
+                        </label>
+                        <div class="form-text">{{ form.is_default.help_text }}</div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> 
+                            {% if object %}Update{% else %}Create{% endif %} Configuration
+                        </button>
+                        <a href="{% url 'communications:config_list' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Setup Guides</h6>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="setupGuides">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#gmailSetup">
+                                Gmail Setup
+                            </button>
+                        </h2>
+                        <div id="gmailSetup" class="accordion-collapse collapse" data-bs-parent="#setupGuides">
+                            <div class="accordion-body small">
+                                <ol>
+                                    <li>Go to Google Account settings</li>
+                                    <li>Enable 2-Step Verification</li>
+                                    <li>Generate an App Password</li>
+                                    <li>Use these settings:
+                                        <ul>
+                                            <li>Host: smtp.gmail.com</li>
+                                            <li>Port: 587</li>
+                                            <li>TLS: Enabled</li>
+                                            <li>Username: your Gmail address</li>
+                                            <li>Password: App Password (not Gmail password)</li>
+                                        </ul>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#outlookSetup">
+                                Outlook Setup
+                            </button>
+                        </h2>
+                        <div id="outlookSetup" class="accordion-collapse collapse" data-bs-parent="#setupGuides">
+                            <div class="accordion-body small">
+                                <ol>
+                                    <li>Use these settings:
+                                        <ul>
+                                            <li>Host: smtp-mail.outlook.com</li>
+                                            <li>Port: 587</li>
+                                            <li>TLS: Enabled</li>
+                                            <li>Username: your Outlook email</li>
+                                            <li>Password: your account password</li>
+                                        </ul>
+                                    </li>
+                                    <li>Ensure your account has SMTP enabled</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-fill SMTP settings based on provider selection
+document.getElementById('id_provider').addEventListener('change', function() {
+    const provider = this.value;
+    const hostField = document.getElementById('id_smtp_host');
+    const portField = document.getElementById('id_smtp_port');
+    const tlsField = document.getElementById('id_use_tls');
+    const sslField = document.getElementById('id_use_ssl');
+    
+    switch(provider) {
+        case 'gmail':
+            hostField.value = 'smtp.gmail.com';
+            portField.value = 587;
+            tlsField.checked = true;
+            sslField.checked = false;
+            break;
+        case 'outlook':
+            hostField.value = 'smtp-mail.outlook.com';
+            portField.value = 587;
+            tlsField.checked = true;
+            sslField.checked = false;
+            break;
+        case 'sendgrid':
+            hostField.value = 'smtp.sendgrid.net';
+            portField.value = 587;
+            tlsField.checked = true;
+            sslField.checked = false;
+            break;
+        case 'ses':
+            hostField.value = 'email-smtp.us-east-1.amazonaws.com';
+            portField.value = 587;
+            tlsField.checked = true;
+            sslField.checked = false;
+            break;
+    }
+});
+</script>
+{% endblock %}

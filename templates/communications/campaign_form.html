@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Email Campaign - CRM System{% endblock %}
+{% block page_title %}Create Email Campaign{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'communications:campaign_list' %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Back to Campaigns
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Campaign Details</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="campaignForm">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {{ form.errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">Campaign Name *</label>
+                                {{ form.name }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.template.id_for_label }}" class="form-label">Email Template *</label>
+                                {{ form.template }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6>Scheduling</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 form-check">
+                                {{ form.send_now }}
+                                <label class="form-check-label" for="{{ form.send_now.id_for_label }}">
+                                    Send Now
+                                </label>
+                                <div class="form-text">{{ form.send_now.help_text }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.scheduled_at.id_for_label }}" class="form-label">Schedule For</label>
+                                {{ form.scheduled_at }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6>Target Audience</h6>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.target_all_leads }}
+                        <label class="form-check-label" for="{{ form.target_all_leads.id_for_label }}">
+                            Target All Leads
+                        </label>
+                    </div>
+                    
+                    <div id="targetingOptions">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Lead Status</label>
+                                    {% for choice in form.target_statuses %}
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Priority</label>
+                                    {% for choice in form.target_priorities %}
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Lead Sources</label>
+                                    {% for choice in form.target_sources %}
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6>Sending Settings</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.batch_size.id_for_label }}" class="form-label">Batch Size</label>
+                                {{ form.batch_size }}
+                                <div class="form-text">{{ form.batch_size.help_text }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.delay_between_batches.id_for_label }}" class="form-label">Delay Between Batches</label>
+                                {{ form.delay_between_batches }}
+                                <div class="form-text">{{ form.delay_between_batches.help_text }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-megaphone"></i> Create Campaign
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="previewCampaign()">
+                            <i class="bi bi-eye"></i> Preview
+                        </button>
+                        <a href="{% url 'communications:campaign_list' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Campaign Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="small">
+                    <li>Choose your target audience carefully</li>
+                    <li>Test your template before sending</li>
+                    <li>Schedule campaigns for optimal times</li>
+                    <li>Monitor delivery rates and engagement</li>
+                    <li>Keep batch sizes reasonable (50-100)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-4" id="recipientPreview" style="display: none;">
+            <div class="card-header">
+                <h6 class="mb-0">Recipients Preview</h6>
+            </div>
+            <div class="card-body">
+                <div id="recipientCount">
+                    <span class="badge bg-primary fs-6">0</span> leads will receive this campaign
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle targeting options based on "Target All Leads" checkbox
+document.getElementById('id_target_all_leads').addEventListener('change', function() {
+    const targetingOptions = document.getElementById('targetingOptions');
+    if (this.checked) {
+        targetingOptions.style.display = 'none';
+    } else {
+        targetingOptions.style.display = 'block';
+    }
+});
+
+// Toggle schedule field based on "Send Now" checkbox
+document.getElementById('id_send_now').addEventListener('change', function() {
+    const scheduleField = document.querySelector('[name="scheduled_at"]').closest('.mb-3');
+    if (this.checked) {
+        scheduleField.style.display = 'none';
+    } else {
+        scheduleField.style.display = 'block';
+    }
+});
+
+function previewCampaign() {
+    // Get selected criteria and show recipient count
+    // This would make an AJAX call to get recipient count
+    document.getElementById('recipientPreview').style.display = 'block';
+    
+    // Simulate recipient count calculation
+    setTimeout(() => {
+        document.getElementById('recipientCount').innerHTML = 
+            '<span class="badge bg-primary fs-6">47</span> leads will receive this campaign';
+    }, 500);
+}
+</script>
+{% endblock %}

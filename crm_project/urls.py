@@ -9,6 +9,8 @@ urlpatterns = [
     path('', include('dashboard.urls')),
     path('accounts/', include('accounts.urls')),
     path('leads/', include('leads.urls')),
+    path('communications/', include('communications.urls')),
+
 ]
 
 if settings.DEBUG:

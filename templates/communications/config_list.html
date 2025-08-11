@@ -1,0 +1,131 @@
+<!-- communications/templates/communications/config_list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Email Configuration - CRM System{% endblock %}
+{% block page_title %}Email Configuration{% endblock %}
+{% block page_subtitle %}Manage your email sending accounts{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'communications:config_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Add Email Account
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% for config in configs %}
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-envelope-gear me-2"></i>
+                    {{ config.name }}
+                    {% if config.is_default %}
+                        <span class="badge bg-primary ms-2">Default</span>
+                    {% endif %}
+                </h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        Actions
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'communications:config_test' config.pk %}">
+                            <i class="bi bi-send"></i> Test Configuration
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'communications:config_update' config.pk %}">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <small class="text-muted">Provider</small>
+                        <p class="mb-2">{{ config.get_provider_display }}</p>
+                        
+                        <small class="text-muted">From Email</small>
+                        <p class="mb-2">{{ config.from_email }}</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted">Status</small>
+                        <p class="mb-2">
+                            {% if config.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </p>
+                        
+                        <small class="text-muted">Daily Limit</small>
+                        <p class="mb-2">{{ config.daily_limit }} emails</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">SMTP Settings</small>
+                    <p class="mb-0 small">
+                        {{ config.smtp_host }}:{{ config.smtp_port }}
+                        {% if config.use_tls %}<span class="badge bg-info ms-1">TLS</span>{% endif %}
+                        {% if config.use_ssl %}<span class="badge bg-info ms-1">SSL</span>{% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <small class="text-muted">
+                    Created {{ config.created_at|date:"M d, Y" }}
+                </small>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-envelope-x fs-1 text-muted mb-3"></i>
+                <h5>No Email Configurations</h5>
+                <p class="text-muted">You need to configure an email account to start sending emails.</p>
+                <a href="{% url 'communications:config_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Add Your First Email Account
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if configs %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Email Configuration Tips
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Gmail Setup</h6>
+                        <ul class="small">
+                            <li>Enable 2-factor authentication</li>
+                            <li>Generate an App Password</li>
+                            <li>Use smtp.gmail.com:587 with TLS</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Outlook Setup</h6>
+                        <ul class="small">
+                            <li>Use smtp-mail.outlook.com:587</li>
+                            <li>Enable TLS encryption</li>
+                            <li>Use your Microsoft account credentials</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
