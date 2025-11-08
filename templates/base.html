@@ -13,93 +13,99 @@
     <!-- Custom CSS -->
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --sidebar-width: 280px;
+            --sidebar-bg: #1f2937;        /* slate-800 */
+            --sidebar-bg-hover: #374151;  /* slate-700 */
+            --sidebar-border: #2b3442;    /* subtle border */
+            --sidebar-text: #e5e7eb;      /* gray-200 */
+            --sidebar-text-dim: #9ca3af;  /* gray-400 */
+            --accent: #9ca3af;            /* gray accent */
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            background-color: #f5f6f8;
         }
 
         .sidebar {
             min-height: 100vh;
+            height: 100vh;
             width: var(--sidebar-width);
-            background: var(--primary-gradient);
+            background: var(--sidebar-bg);
             position: fixed;
             top: 0;
             left: 0;
             z-index: 1000;
             transition: all 0.3s ease;
             box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            border-right: 1px solid var(--sidebar-border);
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
         }
 
         .sidebar-header {
             padding: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--sidebar-border);
+            position: sticky;
+            top: 0;
+            background: var(--sidebar-bg);
         }
 
         .sidebar-brand {
-            color: white;
+            color: var(--sidebar-text);
             text-decoration: none;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             display: flex;
             align-items: center;
+            letter-spacing: 0.3px;
         }
 
-        .sidebar-brand:hover {
-            color: white;
-        }
+        .sidebar-brand:hover { color: var(--sidebar-text); }
 
-        .sidebar-brand i {
-            margin-right: 10px;
-            font-size: 28px;
-        }
+        .sidebar-brand i { margin-right: 10px; font-size: 24px; }
 
-        .sidebar-nav {
-            padding: 20px 0;
-        }
+        .sidebar-nav { padding: 12px 0; flex: 1; }
 
-        .nav-item {
-            margin-bottom: 5px;
-        }
+        .nav-item { margin-bottom: 2px; }
 
         .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            border-radius: 0;
+            color: var(--sidebar-text);
+            padding: 11px 16px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
-            transition: all 0.3s ease;
+            transition: background-color 0.2s ease, color 0.2s ease;
             text-decoration: none;
             position: relative;
-            overflow: hidden;
+            margin: 2px 10px;
         }
 
-        .nav-link:hover,
-        .nav-link.active {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
+        .nav-link .chevron { margin-left: auto; transition: transform 0.2s ease; color: var(--sidebar-text-dim); }
+        .nav-link[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+
+        .nav-link:hover { background: var(--sidebar-bg-hover); color: var(--sidebar-text); }
+
+        .nav-link.active { background: rgba(255,255,255,0.06); color: #fff; }
+
+        .nav-link i { margin-right: 12px; font-size: 18px; width: 20px; text-align: center; color: var(--sidebar-text-dim); }
+        .nav-link.active i { color: var(--sidebar-text); }
+
+        .menu-section {
+            padding: 10px 16px 6px;
+            color: var(--sidebar-text-dim);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
         }
 
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 4px;
-            background: white;
-        }
-
-        .nav-link i {
-            margin-right: 12px;
-            font-size: 18px;
-            width: 20px;
-            text-align: center;
-        }
+        .submenu { padding-left: 8px; }
+        .submenu .nav-link { padding-left: 42px; margin: 2px 10px; }
+        .submenu .nav-link i { width: 18px; font-size: 16px; }
 
         .main-content {
             margin-left: var(--sidebar-width);
@@ -201,7 +207,7 @@
 
         /* Buttons */
         .btn-primary {
-            background: var(--primary-gradient);
+            background: #4b5563;
             border: none;
             border-radius: 8px;
             padding: 10px 20px;
@@ -211,20 +217,21 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(75, 85, 99, 0.35);
         }
 
         .btn-outline-primary {
-            border: 2px solid #667eea;
-            color: #667eea;
+            border: 2px solid #6b7280;
+            color: #374151;
             border-radius: 8px;
             font-weight: 600;
             transition: all 0.3s ease;
         }
 
         .btn-outline-primary:hover {
-            background: var(--primary-gradient);
-            border-color: transparent;
+            background: #6b7280;
+            border-color: #6b7280;
+            color: #fff;
             transform: translateY(-2px);
         }
 
@@ -235,7 +242,7 @@
         }
 
         .table-hover tbody tr:hover {
-            background-color: rgba(102, 126, 234, 0.05);
+            background-color: rgba(55, 65, 81, 0.06);
         }
 
         /* Forms */
@@ -247,8 +254,8 @@
         }
 
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #6b7280;
+            box-shadow: 0 0 0 0.2rem rgba(107, 114, 128, 0.25);
         }
 
         .form-select {
@@ -387,128 +394,154 @@
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <a href="{% url 'dashboard:home' %}" class="sidebar-brand">
-                <i class="bi bi-graph-up-arrow"></i>
+                <i class="bi bi-grid-1x2"></i>
                 <span>CRM Pro</span>
             </a>
         </div>
         
         <ul class="nav flex-column sidebar-nav">
+            <!-- Dashboard -->
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" 
-                   href="{% url 'dashboard:home' %}">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard:home' %}">
                     <i class="bi bi-speedometer2"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
-            
+
+            <!-- Leads (submenu) -->
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.app_name == 'leads' %}active{% endif %}" 
-                   href="{% url 'leads:list' %}">
+                <a class="nav-link" data-bs-toggle="collapse" href="#menu-leads" role="button" aria-expanded="{% if request.resolver_match.app_name == 'leads' %}true{% else %}false{% endif %}" aria-controls="menu-leads">
                     <i class="bi bi-people"></i>
                     <span>Leads</span>
+                    <i class="bi bi-chevron-right chevron"></i>
                 </a>
+                <ul class="nav flex-column collapse submenu {% if request.resolver_match.app_name == 'leads' %}show{% endif %}" id="menu-leads">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'list' %}active{% endif %}" href="{% url 'leads:list' %}">
+                            <i class="bi bi-list"></i>
+                            <span>All Leads</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'create' %}active{% endif %}" href="{% url 'leads:create' %}">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>Create Lead</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'leads:export' %}">
+                            <i class="bi bi-download"></i>
+                            <span>Export</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
-            
-            {% if user.role != 'sales_rep' %}
+
+            <!-- User Management (submenu, restricted) -->
+            {% if user.role == 'admin' or user.role == 'superadmin' %}
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.app_name == 'accounts' and 'user' in request.path %}active{% endif %}" 
-                   href="{% url 'accounts:user_list' %}">
+                <a class="nav-link" data-bs-toggle="collapse" href="#menu-users" role="button" aria-expanded="{% if request.resolver_match.app_name == 'accounts' and 'user' in request.path %}true{% else %}false{% endif %}" aria-controls="menu-users">
                     <i class="bi bi-person-gear"></i>
                     <span>User Management</span>
+                    <i class="bi bi-chevron-right chevron"></i>
                 </a>
+                <ul class="nav flex-column collapse submenu {% if request.resolver_match.app_name == 'accounts' and 'user' in request.path %}show{% endif %}" id="menu-users">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'user_list' %}active{% endif %}" href="{% url 'accounts:user_list' %}">
+                            <i class="bi bi-people"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'user_create' %}active{% endif %}" href="{% url 'accounts:user_create' %}">
+                            <i class="bi bi-person-plus"></i>
+                            <span>Create User</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             {% endif %}
-            
+
+            <!-- Analytics -->
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}" 
-                   href="{% url 'dashboard:analytics' %}">
+                <a class="nav-link {% if request.resolver_match.url_name == 'analytics' and request.resolver_match.app_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:analytics' %}">
                     <i class="bi bi-graph-up"></i>
                     <span>Analytics</span>
                 </a>
             </li>
-            
+
+            <!-- Communications section (submenu) -->
+            <li class="menu-section">Communications</li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'leads:export' %}">
-                    <i class="bi bi-download"></i>
-                    <span>Export Data</span>
-                </a>
-            </li>
-            
-            <!-- Communications Section -->
-            <li class="nav-item mt-4">
-                <div class="nav-link text-white-50 small text-uppercase">
-                    <strong>Communications</strong>
-                </div>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'campaign' in request.path %}active{% endif %}" 
-                   href="{% url 'communications:campaign_list' %}">
+                <a class="nav-link" data-bs-toggle="collapse" href="#menu-comm" role="button" aria-expanded="{% if request.resolver_match.app_name == 'communications' %}true{% else %}false{% endif %}" aria-controls="menu-comm">
                     <i class="bi bi-envelope-paper"></i>
-                    <span>Email Campaigns</span>
+                    <span>Email</span>
+                    <i class="bi bi-chevron-right chevron"></i>
                 </a>
+                <ul class="nav flex-column collapse submenu {% if request.resolver_match.app_name == 'communications' %}show{% endif %}" id="menu-comm">
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'campaign' in request.path %}active{% endif %}" href="{% url 'communications:campaign_list' %}">
+                            <i class="bi bi-megaphone"></i>
+                            <span>Campaigns</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'template' in request.path %}active{% endif %}" href="{% url 'communications:template_list' %}">
+                            <i class="bi bi-file-earmark-text"></i>
+                            <span>Templates</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'sequence' in request.path %}active{% endif %}" href="{% url 'communications:sequence_list' %}">
+                            <i class="bi bi-diagram-3"></i>
+                            <span>Sequences</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'config' in request.path %}active{% endif %}" href="{% url 'communications:config_list' %}">
+                            <i class="bi bi-gear"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'analytics' in request.path %}active{% endif %}" href="{% url 'communications:analytics' %}">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
-            
+
+            <!-- Settings (submenu) -->
+            <li class="menu-section">Settings</li>
             <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'template' in request.path %}active{% endif %}" 
-                   href="{% url 'communications:template_list' %}">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <span>Email Templates</span>
+                <a class="nav-link" data-bs-toggle="collapse" href="#menu-settings" role="button" aria-expanded="false" aria-controls="menu-settings">
+                    <i class="bi bi-sliders"></i>
+                    <span>Account</span>
+                    <i class="bi bi-chevron-right chevron"></i>
                 </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'sequence' in request.path %}active{% endif %}" 
-                   href="{% url 'communications:sequence_list' %}">
-                    <i class="bi bi-diagram-3"></i>
-                    <span>Email Sequences</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'config' in request.path %}active{% endif %}" 
-                   href="{% url 'communications:config_list' %}">
-                    <i class="bi bi-gear"></i>
-                    <span>Email Settings</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.app_name == 'communications' and 'analytics' in request.path %}active{% endif %}" 
-                   href="{% url 'communications:analytics' %}">
-                    <i class="bi bi-graph-up-arrow"></i>
-                    <span>Email Analytics</span>
-                </a>
-            </li>
-            
-            <!-- Settings Section -->
-            <li class="nav-item mt-4">
-                <div class="nav-link text-white-50 small text-uppercase">
-                    <strong>Settings</strong>
-                </div>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:profile' %}">
-                    <i class="bi bi-person-circle"></i>
-                    <span>Profile</span>
-                </a>
-            </li>
-            
-            {% if user.role in 'admin,superadmin' %}
-            <li class="nav-item">
-                <a class="nav-link" href="/admin/" target="_blank">
-                    <i class="bi bi-gear"></i>
-                    <span>Admin Panel</span>
-                </a>
-            </li>
-            {% endif %}
-            
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'accounts:logout' %}">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Logout</span>
-                </a>
+                <ul class="nav flex-column collapse submenu" id="menu-settings">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:profile' %}">
+                            <i class="bi bi-person-circle"></i>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                    {% if user.role == 'admin' or user.role == 'superadmin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/" target="_blank">
+                            <i class="bi bi-gear"></i>
+                            <span>Admin Panel</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:logout' %}">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
         </ul>
     </nav>

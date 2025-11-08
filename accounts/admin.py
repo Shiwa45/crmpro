@@ -18,6 +18,9 @@ class CustomUserAdmin(UserAdmin):
     ordering = ['-date_joined']
     list_per_page = 25
     
+    # Ensure non-editable fields are read-only in admin
+    readonly_fields = UserAdmin.readonly_fields + ('date_joined',)
+    
     fieldsets = UserAdmin.fieldsets + (
         ('Additional Information', {
             'fields': ('phone', 'role', 'department', 'profile_picture'),
